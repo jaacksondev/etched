@@ -11,12 +11,12 @@ public class ComplexMusicLabelItem extends SimpleMusicLabelItem {
 
     public static int getPrimaryColor(ItemStack stack) {
         CompoundTag compoundTag = stack.getTagElement("Label");
-        return compoundTag != null && compoundTag.contains("PrimaryColor", 99) ? compoundTag.getInt("PrimaryColor") : 0xFFFFFF;
+        return compoundTag != null && compoundTag.contains("PrimaryColor", 99) ? compoundTag.getInt("PrimaryColor") : -1;
     }
 
     public static int getSecondaryColor(ItemStack itemStack) {
         CompoundTag compoundTag = itemStack.getTagElement("Label");
-        return compoundTag != null && compoundTag.contains("SecondaryColor", 99) ? compoundTag.getInt("SecondaryColor") : 0xFFFFFF;
+        return compoundTag != null && compoundTag.contains("SecondaryColor", 99) ? compoundTag.getInt("SecondaryColor") : -1;
     }
 
     public static void setColor(ItemStack stack, int primary, int secondary) {

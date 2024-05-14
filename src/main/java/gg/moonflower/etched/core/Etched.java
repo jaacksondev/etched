@@ -11,12 +11,18 @@ import gg.moonflower.etched.common.sound.download.SoundCloudSource;
 import gg.moonflower.etched.core.registry.*;
 import net.minecraft.client.gui.screens.MenuScreens;
 import net.minecraft.client.renderer.item.ItemProperties;
+import net.minecraft.core.cauldron.CauldronInteraction;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.stats.Stats;
 import net.minecraft.world.InteractionHand;
+import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.DyeableLeatherItem;
+import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.LayeredCauldronBlock;
 import net.minecraftforge.common.ForgeConfigSpec;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.event.GrindstoneEvent;
@@ -78,6 +84,25 @@ public class Etched {
 
         SoundSourceManager.registerSource(new SoundCloudSource());
         SoundSourceManager.registerSource(new BandcampSource());
+
+        event.enqueueWork(() -> {
+            CauldronInteraction.WATER.put(EtchedItems.BLANK_MUSIC_DISC.get(), CauldronInteraction.DYED_ITEM);
+            CauldronInteraction.WATER.put(EtchedItems.MUSIC_LABEL.get(), CauldronInteraction.DYED_ITEM);
+            CauldronInteraction.WATER.put(EtchedItems.COMPLEX_MUSIC_LABEL.get(), (state, level, pos, player, hand, stack) -> {
+                if (!level.isClientSide()) {
+                    stack.removeTagKey("Label");
+                    ItemStack newStack = new ItemStack(EtchedItems.MUSIC_LABEL.get());
+                    newStack.setCount(stack.getCount());
+                    newStack.setTag(stack.getTag());
+
+                    player.setItemInHand(hand, newStack);
+                    player.awardStat(Stats.CLEAN_ARMOR);
+                    LayeredCauldronBlock.lowerFillLevel(state, level, pos);
+                }
+
+                return InteractionResult.sidedSuccess(level.isClientSide());
+            });
+        });
     }
 
     private static void clientInit(FMLClientSetupEvent event) {
