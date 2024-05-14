@@ -12,14 +12,14 @@ import gg.moonflower.etched.core.registry.*;
 import net.minecraft.client.gui.screens.MenuScreens;
 import net.minecraft.client.renderer.item.ItemProperties;
 import net.minecraft.core.cauldron.CauldronInteraction;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.Tag;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.stats.Stats;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.item.DyeableLeatherItem;
-import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.LayeredCauldronBlock;
@@ -90,10 +90,17 @@ public class Etched {
             CauldronInteraction.WATER.put(EtchedItems.MUSIC_LABEL.get(), CauldronInteraction.DYED_ITEM);
             CauldronInteraction.WATER.put(EtchedItems.COMPLEX_MUSIC_LABEL.get(), (state, level, pos, player, hand, stack) -> {
                 if (!level.isClientSide()) {
-                    stack.removeTagKey("Label");
                     ItemStack newStack = new ItemStack(EtchedItems.MUSIC_LABEL.get());
                     newStack.setCount(stack.getCount());
-                    newStack.setTag(stack.getTag());
+                    if (stack.hasTag()) {
+                        CompoundTag tag = stack.getTag().copy();
+                        if (tag.contains("Label", Tag.TAG_COMPOUND)) {
+                            CompoundTag label = tag.getCompound("Label");
+                            label.remove("PrimaryColor");
+                            label.remove("SecondaryColor");
+                        }
+                        newStack.setTag(tag);
+                    }
 
                     player.setItemInHand(hand, newStack);
                     player.awardStat(Stats.CLEAN_ARMOR);
