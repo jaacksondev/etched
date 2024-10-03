@@ -140,12 +140,19 @@ public interface AudioSource {
 
             // Handle streams
             if (contentLength < 0 || cacheTime <= 0 || noStore) {
-                Files.deleteIfExists(path);
-                SoundCache.updateCacheMetadata(key, null);
-                if (!type.isStream()) {
-                    throw new IOException("The provided URL is a stream, but that is not supported");
+                if (contentLength > 0 && type.isFile()) {
+                    // Simply treat as a regular file
+                    LOGGER.debug("No-cache file found!");
+                    // Enable caching
+                    cacheTime = Long.MAX_VALUE;
+                } else {
+                    Files.deleteIfExists(path);
+                    SoundCache.updateCacheMetadata(key, null);
+                    if (!type.isStream()) {
+                        throw new IOException("The provided URL is a stream, but that is not supported");
+                    }
+                    return () -> new AsyncInputStream(url::openStream, 8192, 8, HttpUtil.DOWNLOAD_EXECUTOR);
                 }
-                return () -> new AsyncInputStream(url::openStream, 8192, 8, HttpUtil.DOWNLOAD_EXECUTOR);
             }
 
             // The cached file is still fresh, so only the metadata needs to be updated
