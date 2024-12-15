@@ -10,8 +10,6 @@ import net.minecraft.Util;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.User;
 import net.minecraft.network.chat.Component;
-import net.minecraft.server.packs.PackType;
-import net.minecraft.util.HttpUtil;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.Nullable;
@@ -103,7 +101,7 @@ public interface AudioSource {
                                 try {
                                     cacheTime = Integer.parseInt(Objects.requireNonNull(value));
                                 } catch (NumberFormatException e) {
-                                    LOGGER.error("Invalid max-age: " + value);
+                                    LOGGER.error("Invalid max-age: {}", value);
                                 }
                             }
                             case "s-maxage" -> {
@@ -111,7 +109,7 @@ public interface AudioSource {
                                 try {
                                     cacheTime = Integer.parseInt(Objects.requireNonNull(value));
                                 } catch (NumberFormatException e) {
-                                    LOGGER.error("Invalid s-maxage: " + value);
+                                    LOGGER.error("Invalid s-maxage: {}", value);
                                 }
                             }
 
@@ -143,12 +141,19 @@ public interface AudioSource {
 
             // Handle streams
             if (contentLength < 0 || cacheTime <= 0 || noStore) {
-                Files.deleteIfExists(path);
-                SoundCache.updateCacheMetadata(key, null);
-                if (!type.isStream()) {
-                    throw new IOException("The provided URL is a stream, but that is not supported");
+                if (contentLength > 0 && type.isFile()) {
+                    // Simply treat as a regular file
+                    LOGGER.debug("No-cache file found!");
+                    // Enable caching
+                    cacheTime = Long.MAX_VALUE;
+                } else {
+                    Files.deleteIfExists(path);
+                    SoundCache.updateCacheMetadata(key, null);
+                    if (!type.isStream()) {
+                        throw new IOException("The provided URL is a stream, but that is not supported");
+                    }
+                    return () -> new AsyncInputStream(url::openStream, 8192, 8, Util.nonCriticalIoPool());
                 }
-                return () -> new AsyncInputStream(url::openStream, 8192, 8, Util.nonCriticalIoPool());
             }
 
             // The cached file is still fresh, so only the metadata needs to be updated
