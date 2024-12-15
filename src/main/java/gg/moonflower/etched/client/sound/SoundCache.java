@@ -8,8 +8,8 @@ import gg.moonflower.etched.api.util.DownloadProgressListener;
 import gg.moonflower.etched.core.Etched;
 import net.minecraft.Util;
 import net.minecraft.client.Minecraft;
-import net.minecraftforge.common.MinecraftForge;
-import net.minecraftforge.event.TickEvent;
+import net.neoforged.neoforge.client.event.ClientTickEvent;
+import net.neoforged.neoforge.common.NeoForge;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.logging.log4j.LogManager;
@@ -86,7 +86,7 @@ public final class SoundCache {
                 LOGGER.error("Failed to load cache metadata", e);
             }
         }
-        MinecraftForge.EVENT_BUS.<TickEvent.ClientTickEvent>addListener(event -> {
+        NeoForge.EVENT_BUS.<ClientTickEvent.Post>addListener(event -> {
             if (nextWriteTime == Long.MAX_VALUE) {
                 return;
             }

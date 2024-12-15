@@ -31,7 +31,7 @@ public class StreamingAudioSource implements AudioSource {
         this.type = type;
         int files = Math.min(urls.length, 3);
         DownloadProgressListener accumulatingListener = progressListener != null ? new AccumulatingDownloadProgressListener(progressListener, files) : null;
-        this.downloadFuture = CompletableFuture.allOf(IntStream.range(0, files).mapToObj(i -> CompletableFuture.runAsync(() -> AudioSource.downloadTo(urls[i], temporary, accumulatingListener, type), HttpUtil.DOWNLOAD_EXECUTOR)).toArray(CompletableFuture[]::new));
+        this.downloadFuture = CompletableFuture.allOf(IntStream.range(0, files).mapToObj(i -> CompletableFuture.runAsync(() -> AudioSource.downloadTo(urls[i], temporary, accumulatingListener, type), Util.nonCriticalIoPool())).toArray(CompletableFuture[]::new));
     }
 
     @Override
@@ -39,7 +39,7 @@ public class StreamingAudioSource implements AudioSource {
         if (this.stream == null) {
             this.stream = this.downloadFuture.thenApplyAsync(__ -> {
                 try {
-                    return new StreamingInputStream(this.urls, i -> CompletableFuture.supplyAsync(() -> AudioSource.downloadTo(this.urls[i], this.temporary, null, this.type), HttpUtil.DOWNLOAD_EXECUTOR).thenApplyAsync(stream -> {
+                    return new StreamingInputStream(this.urls, i -> CompletableFuture.supplyAsync(() -> AudioSource.downloadTo(this.urls[i], this.temporary, null, this.type), Util.nonCriticalIoPool()).thenApplyAsync(stream -> {
                         try {
                             return stream.get();
                         } catch (Exception e) {

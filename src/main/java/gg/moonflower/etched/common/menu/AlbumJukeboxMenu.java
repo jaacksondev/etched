@@ -1,8 +1,6 @@
 package gg.moonflower.etched.common.menu;
 
 import gg.moonflower.etched.api.record.PlayableRecord;
-import gg.moonflower.etched.common.blockentity.AlbumJukeboxBlockEntity;
-import gg.moonflower.etched.common.network.play.SetAlbumJukeboxTrackPacket;
 import gg.moonflower.etched.core.registry.EtchedMenus;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.Container;
@@ -13,8 +11,6 @@ import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.inventory.DataSlot;
 import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.level.Level;
-import net.minecraft.world.level.block.entity.BlockEntity;
 
 /**
  * @author Ocelot
@@ -92,13 +88,13 @@ public class AlbumJukeboxMenu extends AbstractContainerMenu {
         }
     }
 
-    public boolean setPlayingTrack(Level level, SetAlbumJukeboxTrackPacket pkt) {
-        BlockEntity blockEntity = level.getBlockEntity(this.pos);
-        if (blockEntity instanceof AlbumJukeboxBlockEntity) {
-            return ((AlbumJukeboxBlockEntity) blockEntity).setPlayingIndex(pkt.playingIndex(), pkt.track());
-        }
-        return false;
-    }
+//    public boolean setPlayingTrack(Level level, SetAlbumJukeboxTrackPacket pkt) {
+//        BlockEntity blockEntity = level.getBlockEntity(this.pos);
+//        if (blockEntity instanceof AlbumJukeboxBlockEntity) {
+//            return ((AlbumJukeboxBlockEntity) blockEntity).setPlayingIndex(pkt.playingIndex(), pkt.track());
+//        }
+//        return false;
+//    }
 
     @Override
     public boolean stillValid(Player player) {
@@ -109,7 +105,7 @@ public class AlbumJukeboxMenu extends AbstractContainerMenu {
     public ItemStack quickMoveStack(Player player, int i) {
         ItemStack itemStack = ItemStack.EMPTY;
         Slot slot = this.slots.get(i);
-        if (slot != null && slot.hasItem()) {
+        if (slot.hasItem()) {
             ItemStack itemStack2 = slot.getItem();
             itemStack = itemStack2.copy();
             if (i < this.container.getContainerSize()) {

@@ -1,20 +1,20 @@
 package gg.moonflower.etched.api.record;
 
 import gg.moonflower.etched.api.sound.SoundTracker;
-import gg.moonflower.etched.common.network.EtchedMessages;
-import gg.moonflower.etched.common.network.play.ClientboundPlayEntityMusicPacket;
+import gg.moonflower.etched.common.component.EtchedMusicComponent;
+import gg.moonflower.etched.core.registry.EtchedComponents;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.client.resources.sounds.SoundInstance;
-import net.minecraft.network.chat.Component;
+import net.minecraft.core.component.DataComponents;
 import net.minecraft.server.packs.resources.ResourceManager;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.item.ItemStack;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
-import net.minecraftforge.network.PacketDistributor;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.api.distmarker.OnlyIn;
 
 import java.net.Proxy;
+import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 
@@ -33,7 +33,7 @@ public interface PlayableRecord {
      * @return Whether that stack can play
      */
     static boolean isPlayableRecord(ItemStack stack) {
-        return stack.getItem() instanceof PlayableRecord && ((PlayableRecord) stack.getItem()).canPlay(stack);
+        return stack.has(DataComponents.JUKEBOX_PLAYABLE);
     }
 
     /**
@@ -58,7 +58,7 @@ public interface PlayableRecord {
      * @param restart Whether to restart the track from the beginning or start a new playback
      */
     static void playEntityRecord(Entity entity, ItemStack record, boolean restart) {
-        EtchedMessages.PLAY.send(PacketDistributor.TRACKING_ENTITY.with(() -> entity), new ClientboundPlayEntityMusicPacket(record, entity, restart));
+//        EtchedMessages.PLAY.send(PacketDistributor.TRACKING_ENTITY.with(() -> entity), new ClientboundPlayEntityMusicPacket(record, entity, restart));
     }
 
     /**
@@ -67,7 +67,7 @@ public interface PlayableRecord {
      * @param entity The entity to stop playing records
      */
     static void stopEntityRecord(Entity entity) {
-        EtchedMessages.PLAY.send(PacketDistributor.TRACKING_ENTITY.with(() -> entity), new ClientboundPlayEntityMusicPacket(entity));
+//        EtchedMessages.PLAY.send(PacketDistributor.TRACKING_ENTITY.with(() -> entity), new ClientboundPlayEntityMusicPacket(entity));
     }
 
     /**
@@ -76,11 +76,12 @@ public interface PlayableRecord {
      * @param stack The stack to check
      * @return The tracks on that record
      */
-    static Optional<TrackData[]> getStackMusic(ItemStack stack) {
-        if (stack.isEmpty() || !(stack.getItem() instanceof PlayableRecord record)) {
+    static Optional<List<TrackData>> getStackMusic(ItemStack stack) {
+        if (stack.isEmpty()) {
             return Optional.empty();
         }
-        return record.getMusic(stack);
+        EtchedMusicComponent music = stack.getComponents().get(EtchedComponents.MUSIC.get());
+        return music != null ? Optional.of(music.tracks()) : Optional.empty();
     }
 
     /**
@@ -90,10 +91,7 @@ public interface PlayableRecord {
      * @return The album track on that record
      */
     static Optional<TrackData> getStackAlbum(ItemStack stack) {
-        if (stack.isEmpty() || !(stack.getItem() instanceof PlayableRecord record)) {
-            return Optional.empty();
-        }
-        return record.getAlbum(stack);
+        return Optional.empty(); // TODO
     }
 
     /**

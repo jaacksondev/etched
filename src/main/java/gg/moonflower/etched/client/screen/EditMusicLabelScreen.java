@@ -1,12 +1,9 @@
 package gg.moonflower.etched.client.screen;
 
 import com.mojang.blaze3d.systems.RenderSystem;
-import gg.moonflower.etched.common.item.ComplexMusicLabelItem;
-import gg.moonflower.etched.common.item.MusicLabelItem;
-import gg.moonflower.etched.common.item.SimpleMusicLabelItem;
-import gg.moonflower.etched.common.network.EtchedMessages;
-import gg.moonflower.etched.common.network.play.ServerboundEditMusicLabelPacket;
+import gg.moonflower.etched.common.component.MusicLabelComponent;
 import gg.moonflower.etched.core.Etched;
+import gg.moonflower.etched.core.registry.EtchedComponents;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Button;
@@ -22,14 +19,14 @@ import net.minecraft.world.item.ItemStack;
 
 public class EditMusicLabelScreen extends Screen {
 
-    private static final ResourceLocation TEXTURE = new ResourceLocation(Etched.MOD_ID, "textures/gui/edit_music_label.png");
-    private static final ResourceLocation LABEL = new ResourceLocation(Etched.MOD_ID, "textures/gui/label.png");
+    private static final ResourceLocation TEXTURE = Etched.etchedPath("textures/gui/edit_music_label.png");
+    private static final ResourceLocation LABEL = Etched.etchedPath("textures/gui/label.png");
     private static final Component TITLE_COMPONENT = Component.translatable("screen.etched.edit_music_label.title");
     private static final Component AUTHOR_COMPONENT = Component.translatable("screen.etched.edit_music_label.author");
 
     private final Player player;
+    private final MusicLabelComponent musicLabel;
     private final InteractionHand hand;
-    private final ItemStack labelStack;
     private final int imageWidth = 176;
     private final int imageHeight = 139;
 
@@ -41,7 +38,12 @@ public class EditMusicLabelScreen extends Screen {
         super(TITLE_COMPONENT);
         this.player = player;
         this.hand = hand;
-        this.labelStack = stack;
+
+        MusicLabelComponent musicLabel = stack.get(EtchedComponents.MUSIC_LABEL);
+        if (musicLabel == null) {
+            musicLabel = MusicLabelComponent.EMPTY.withAuthor(player.getDisplayName().getString());
+        }
+        this.musicLabel = musicLabel;
     }
 
     @Override
@@ -56,7 +58,7 @@ public class EditMusicLabelScreen extends Screen {
         this.addRenderableWidget(this.doneButton);
 
         this.title = new EditBox(this.font, leftPos + 10, topPos + 91, 154, 10, TITLE_COMPONENT);
-        this.title.setValue(SimpleMusicLabelItem.getTitle(this.labelStack));
+        this.title.setValue(this.musicLabel.title());
         this.title.setTextColorUneditable(-1);
         this.title.setTextColor(-1);
         this.title.setMaxLength(128);
@@ -66,29 +68,17 @@ public class EditMusicLabelScreen extends Screen {
         this.setFocused(this.title);
 
         this.author = new EditBox(this.font, leftPos + 10, topPos + 121, 154, 10, AUTHOR_COMPONENT);
-        this.author.setValue(SimpleMusicLabelItem.getAuthor(this.labelStack));
+        this.author.setValue(this.musicLabel.artist());
         this.author.setTextColorUneditable(-1);
         this.author.setTextColor(-1);
         this.author.setMaxLength(128);
         this.author.setBordered(false);
         this.author.setCanLoseFocus(true);
 
-        this.title.setResponder(string -> {
-            if ((this.author.getValue().isEmpty() || string.isEmpty()) && this.doneButton.active) {
-                this.doneButton.active = false;
-            } else if ((!this.author.getValue().isEmpty() && !string.isEmpty()) && !this.doneButton.active) {
-                this.doneButton.active = true;
-            }
-        });
+        this.title.setResponder(string -> this.doneButton.active = !this.author.getValue().isEmpty() && !string.isEmpty());
         this.addRenderableWidget(this.title);
 
-        this.author.setResponder(string -> {
-            if ((this.title.getValue().isEmpty() || string.isEmpty()) && this.doneButton.active) {
-                this.doneButton.active = false;
-            } else if ((!this.title.getValue().isEmpty() && !string.isEmpty()) && !this.doneButton.active) {
-                this.doneButton.active = true;
-            }
-        });
+        this.author.setResponder(string -> this.doneButton.active = !this.title.getValue().isEmpty() && !string.isEmpty());
         this.addRenderableWidget(this.author);
     }
 
@@ -110,13 +100,9 @@ public class EditMusicLabelScreen extends Screen {
     }
 
     @Override
-    public void tick() {
-        this.title.tick();
-        this.author.tick();
-    }
+    public void renderBackground(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
+        this.renderTransparentBackground(graphics);
 
-    protected void renderBg(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
-        this.renderBackground(graphics);
         int leftPos = (this.width - this.imageWidth) / 2;
         int topPos = (this.height - this.imageHeight) / 2;
 
@@ -124,15 +110,8 @@ public class EditMusicLabelScreen extends Screen {
         graphics.drawString(this.font, TITLE_COMPONENT, leftPos + 7, topPos + 77, 4210752, false);
         graphics.drawString(this.font, AUTHOR_COMPONENT, leftPos + 7, topPos + 77 + 30, 4210752, false);
 
-        int primaryLabelColor = 0xFFFFFF;
-        int secondaryLabelColor = primaryLabelColor;
-        if (this.labelStack.getItem() instanceof MusicLabelItem) {
-            primaryLabelColor = MusicLabelItem.getLabelColor(this.labelStack);
-            secondaryLabelColor = primaryLabelColor;
-        } else if (this.labelStack.getItem() instanceof ComplexMusicLabelItem) {
-            primaryLabelColor = ComplexMusicLabelItem.getPrimaryColor(this.labelStack);
-            secondaryLabelColor = ComplexMusicLabelItem.getSecondaryColor(this.labelStack);
-        }
+        int primaryLabelColor = this.musicLabel.primaryColor();
+        int secondaryLabelColor = this.musicLabel.secondaryColor();
 
         RenderSystem.setShaderColor((float) (primaryLabelColor >> 16 & 255) / 255.0F, (float) (primaryLabelColor >> 8 & 255) / 255.0F, (float) (primaryLabelColor & 255) / 255.0F, 1.0F);
         graphics.blit(LABEL, leftPos, topPos, 0, 0, this.imageWidth, 70);
@@ -142,19 +121,14 @@ public class EditMusicLabelScreen extends Screen {
     }
 
     @Override
-    public void render(GuiGraphics graphics, int mouseX, int mouseY, float partialTicks) {
-        this.renderBg(graphics, mouseX, mouseY, partialTicks);
-        super.render(graphics, mouseX, mouseY, partialTicks);
+    public boolean isPauseScreen() {
+        return false;
     }
 
     private void saveChanges() {
+        int slot = this.hand == InteractionHand.MAIN_HAND ? this.player.getInventory().selected : 40;
         String author = this.author.getValue().trim();
         String title = this.title.getValue().trim();
-
-        SimpleMusicLabelItem.setTitle(this.labelStack, title);
-        SimpleMusicLabelItem.setAuthor(this.labelStack, author);
-
-        int slot = this.hand == InteractionHand.MAIN_HAND ? this.player.getInventory().selected : 40;
-        EtchedMessages.PLAY.sendToServer(new ServerboundEditMusicLabelPacket(slot, author, title));
+//        EtchedMessages.PLAY.sendToServer(new ServerboundEditMusicLabelPacket(slot, author, title));
     }
 }

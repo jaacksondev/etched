@@ -1,38 +1,27 @@
 package gg.moonflower.etched.common.item;
 
-import gg.moonflower.etched.api.record.PlayableRecord;
 import gg.moonflower.etched.api.sound.SoundTracker;
 import gg.moonflower.etched.common.menu.BoomboxMenu;
 import gg.moonflower.etched.core.Etched;
-import gg.moonflower.etched.core.registry.EtchedItems;
 import it.unimi.dsi.fastutil.ints.Int2ObjectArrayMap;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
-import net.minecraft.nbt.CompoundTag;
-import net.minecraft.nbt.Tag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResultHolder;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
-import net.minecraft.world.entity.SlotAccess;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.AbstractContainerMenu;
-import net.minecraft.world.inventory.ClickAction;
-import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.TooltipFlag;
 import net.minecraft.world.level.Level;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.LinkedList;
-import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 
 public class BoomboxItem extends Item implements ContainerItem {
 
@@ -105,64 +94,65 @@ public class BoomboxItem extends Item implements ContainerItem {
         return new BoomboxMenu(containerId, inventory, index);
     }
 
-    @Override
-    public boolean overrideStackedOnOther(ItemStack boombox, Slot slot, ClickAction clickAction, Player player) {
-        if (Etched.SERVER_CONFIG.useBoomboxMenu.get()) {
-            return false;
-        }
-        if (clickAction != ClickAction.SECONDARY) {
-            return false;
-        }
+//    @Override
+//    public boolean overrideStackedOnOther(ItemStack boombox, Slot slot, ClickAction clickAction, Player player) {
+//        if (Etched.SERVER_CONFIG.useBoomboxMenu.get()) {
+//            return false;
+//        }
+//        if (clickAction != ClickAction.SECONDARY) {
+//            return false;
+//        }
+//
+//        ItemStack clickItem = slot.getItem();
+//        if (clickItem.isEmpty()) {
+//            this.playRemoveOneSound(player);
+//            removeOne(boombox).ifPresent(key -> setRecord(boombox, slot.safeInsert(key)));
+//        } else if (canAdd(boombox, clickItem)) {
+//            this.playInsertSound(player);
+//            setRecord(boombox, slot.safeTake(clickItem.getCount(), 1, player).split(1));
+//        }
+//
+//        return true;
+//    }
+//
+//    @Override
+//    public boolean overrideOtherStackedOnMe(ItemStack boombox, ItemStack clickItem, Slot slot, ClickAction clickAction, Player player, SlotAccess slotAccess) {
+//        if (Etched.SERVER_CONFIG.useBoomboxMenu.get()) {
+//            return false;
+//        }
+//        if (clickAction == ClickAction.SECONDARY && slot.allowModification(player)) {
+//            if (clickItem.isEmpty()) {
+//                removeOne(boombox).ifPresent(removedKey -> {
+//                    this.playRemoveOneSound(player);
+//                    slotAccess.set(removedKey);
+//                });
+//            } else if (canAdd(boombox, clickItem)) {
+//                this.playInsertSound(player);
+//                setRecord(boombox, clickItem.split(1));
+//            }
+//
+//            return true;
+//        }
+//
+//        return false;
+//    }
 
-        ItemStack clickItem = slot.getItem();
-        if (clickItem.isEmpty()) {
-            this.playRemoveOneSound(player);
-            removeOne(boombox).ifPresent(key -> setRecord(boombox, slot.safeInsert(key)));
-        } else if (canAdd(boombox, clickItem)) {
-            this.playInsertSound(player);
-            setRecord(boombox, slot.safeTake(clickItem.getCount(), 1, player).split(1));
-        }
-
-        return true;
-    }
-
-    @Override
-    public boolean overrideOtherStackedOnMe(ItemStack boombox, ItemStack clickItem, Slot slot, ClickAction clickAction, Player player, SlotAccess slotAccess) {
-        if (Etched.SERVER_CONFIG.useBoomboxMenu.get()) {
-            return false;
-        }
-        if (clickAction == ClickAction.SECONDARY && slot.allowModification(player)) {
-            if (clickItem.isEmpty()) {
-                removeOne(boombox).ifPresent(removedKey -> {
-                    this.playRemoveOneSound(player);
-                    slotAccess.set(removedKey);
-                });
-            } else if (canAdd(boombox, clickItem)) {
-                this.playInsertSound(player);
-                setRecord(boombox, clickItem.split(1));
-            }
-
-            return true;
-        }
-
-        return false;
-    }
-
-    @Override
-    public void appendHoverText(ItemStack stack, @Nullable Level level, List<Component> tooltipComponents, TooltipFlag isAdvanced) {
-        tooltipComponents.add(PAUSE);
-        if (hasRecord(stack)) {
-            ItemStack record = getRecord(stack);
-            List<Component> records = new LinkedList<>();
-            record.getItem().appendHoverText(record, level, records, isAdvanced);
-
-            if (!records.isEmpty()) {
-                tooltipComponents.add(Component.empty());
-                tooltipComponents.add(RECORDS);
-                tooltipComponents.addAll(records);
-            }
-        }
-    }
+//    @Override
+//    public void appendHoverText(ItemStack stack, @Nullable Level level, List<Component> tooltipComponents, TooltipFlag isAdvanced) {
+//        tooltipComponents.add(PAUSE);
+//        if (hasRecord(stack)) {
+//            ItemStack record = getRecord(stack);
+//            List<Component> records = new LinkedList<>();
+//            record.getItem().appendHoverText(record, level, records, isAdvanced);
+//
+//            if (!records.isEmpty()) {
+//                tooltipComponents.add(Component.empty());
+//                tooltipComponents.add(RECORDS);
+//                tooltipComponents.addAll(records);
+//            }
+//        }
+//    }
+    // FIXME
 
     private void playRemoveOneSound(Entity entity) {
         entity.playSound(SoundEvents.BUNDLE_REMOVE_ONE, 0.8F, 0.8F + entity.level().getRandom().nextFloat() * 0.4F);
@@ -199,71 +189,71 @@ public class BoomboxItem extends Item implements ContainerItem {
     }
 
     public static boolean isPaused(ItemStack stack) {
-        if (!(stack.getItem() instanceof BoomboxItem)) {
-            return false;
-        }
-        CompoundTag compoundTag = stack.getTag();
-        return compoundTag != null && compoundTag.getBoolean("Paused");
+//        if (!(stack.getItem() instanceof BoomboxItem)) {
+        return false;
+//        }
+//        CompoundTag compoundTag = stack.getTag();
+//        return compoundTag != null && compoundTag.getBoolean("Paused");
     }
 
     public static boolean hasRecord(ItemStack stack) {
-        if (!(stack.getItem() instanceof BoomboxItem)) {
-            return false;
-        }
-        CompoundTag compoundTag = stack.getTag();
-        return compoundTag != null && compoundTag.contains("Record", Tag.TAG_COMPOUND);
+//        if (!(stack.getItem() instanceof BoomboxItem)) {
+        return false;
+//        }
+//        CompoundTag compoundTag = stack.getTag();
+//        return compoundTag != null && compoundTag.contains("Record", Tag.TAG_COMPOUND);
     }
 
     public static ItemStack getRecord(ItemStack stack) {
-        if (!(stack.getItem() instanceof BoomboxItem)) {
-            return ItemStack.EMPTY;
-        }
-        CompoundTag compoundTag = stack.getTag();
-        return compoundTag != null && compoundTag.contains("Record", Tag.TAG_COMPOUND) ? ItemStack.of(compoundTag.getCompound("Record")) : ItemStack.EMPTY;
+//        if (!(stack.getItem() instanceof BoomboxItem)) {
+        return ItemStack.EMPTY;
+//        }
+//        CompoundTag compoundTag = stack.getTag();
+//        return compoundTag != null && compoundTag.contains("Record", Tag.TAG_COMPOUND) ? ItemStack.of(compoundTag.getCompound("Record")) : ItemStack.EMPTY;
     }
 
     public static void setRecord(ItemStack stack, ItemStack record) {
-        if (!(stack.getItem() instanceof BoomboxItem)) {
-            return;
-        }
-
-        if (record.isEmpty()) {
-            stack.removeTagKey("Record");
-        } else {
-            stack.getOrCreateTag().put("Record", record.save(new CompoundTag()));
-        }
+//        if (!(stack.getItem() instanceof BoomboxItem)) {
+//            return;
+//        }
+//
+//        if (record.isEmpty()) {
+//            stack.removeTagKey("Record");
+//        } else {
+//            stack.getOrCreateTag().put("Record", record.save(new CompoundTag()));
+//        }
     }
 
     public static void setPaused(ItemStack stack, boolean paused) {
-        if (!(stack.getItem() instanceof BoomboxItem)) {
-            return;
-        }
-
-        if (!paused) {
-            stack.removeTagKey("Paused");
-        } else {
-            stack.getOrCreateTag().putBoolean("Paused", true);
-        }
+//        if (!(stack.getItem() instanceof BoomboxItem)) {
+//            return;
+//        }
+//
+//        if (!paused) {
+//            stack.removeTagKey("Paused");
+//        } else {
+//            stack.getOrCreateTag().putBoolean("Paused", true);
+//        }
     }
 
-    private static Optional<ItemStack> removeOne(ItemStack boombox) {
-        if (!hasRecord(boombox)) {
-            return Optional.empty();
-        }
-
-        ItemStack record = getRecord(boombox);
-        if (record.isEmpty()) {
-            return Optional.empty();
-        }
-
-        setRecord(boombox, ItemStack.EMPTY);
-        return Optional.of(record);
-    }
-
-    private static boolean canAdd(ItemStack boombox, ItemStack record) {
-        if (!(boombox.is(EtchedItems.BOOMBOX.get())) || !(record.getItem() instanceof PlayableRecord)) {
-            return false;
-        }
-        return getRecord(boombox).isEmpty();
-    }
+//    private static Optional<ItemStack> removeOne(ItemStack boombox) {
+//        if (!hasRecord(boombox)) {
+//            return Optional.empty();
+//        }
+//
+//        ItemStack record = getRecord(boombox);
+//        if (record.isEmpty()) {
+//            return Optional.empty();
+//        }
+//
+//        setRecord(boombox, ItemStack.EMPTY);
+//        return Optional.of(record);
+//    }
+//
+//    private static boolean canAdd(ItemStack boombox, ItemStack record) {
+//        if (!(boombox.is(EtchedItems.BOOMBOX.get())) || !(record.getItem() instanceof PlayableRecord)) {
+//            return false;
+//        }
+//        return getRecord(boombox).isEmpty();
+//    }
 }

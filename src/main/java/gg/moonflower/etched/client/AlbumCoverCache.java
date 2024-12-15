@@ -10,9 +10,8 @@ import gg.moonflower.etched.client.render.item.AlbumImageProcessor;
 import gg.moonflower.etched.core.Etched;
 import net.minecraft.Util;
 import net.minecraft.client.Minecraft;
-import net.minecraft.util.HttpUtil;
-import net.minecraftforge.common.MinecraftForge;
-import net.minecraftforge.event.TickEvent;
+import net.neoforged.neoforge.client.event.ClientTickEvent;
+import net.neoforged.neoforge.common.NeoForge;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.logging.log4j.LogManager;
@@ -56,7 +55,7 @@ public final class AlbumCoverCache {
             }
         }
 
-        MinecraftForge.EVENT_BUS.<TickEvent.ClientTickEvent>addListener(event -> {
+        NeoForge.EVENT_BUS.<ClientTickEvent>addListener(event -> {
             if (nextWriteTime == Long.MAX_VALUE) {
                 return;
             }
@@ -78,7 +77,7 @@ public final class AlbumCoverCache {
             } catch (Exception e) {
                 throw new CompletionException(e);
             }
-        }, HttpUtil.DOWNLOAD_EXECUTOR).thenApplyAsync(path -> {
+        }, Util.nonCriticalIoPool()).thenApplyAsync(path -> {
             try (FileInputStream is = new FileInputStream(path.toFile())) {
                 return AlbumCover.of(AlbumImageProcessor.apply(NativeImage.read(is), AlbumCoverItemRenderer.getOverlayImage()));
             } catch (Exception e) {

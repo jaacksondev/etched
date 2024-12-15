@@ -13,7 +13,7 @@ import net.minecraft.world.entity.player.Inventory;
  */
 public class BoomboxScreen extends AbstractContainerScreen<BoomboxMenu> {
 
-    private static final ResourceLocation BOOMBOX_LOCATION = new ResourceLocation(Etched.MOD_ID, "textures/gui/container/boombox.png");
+    private static final ResourceLocation BOOMBOX_LOCATION = Etched.etchedPath("textures/gui/container/boombox.png");
 
     public BoomboxScreen(BoomboxMenu hopperMenu, Inventory inventory, Component component) {
         super(hopperMenu, inventory, component);
@@ -23,7 +23,7 @@ public class BoomboxScreen extends AbstractContainerScreen<BoomboxMenu> {
 
     @Override
     public void render(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
-        this.renderBackground(guiGraphics);
+        this.renderTransparentBackground(guiGraphics);
         super.render(guiGraphics, mouseX, mouseY, partialTick);
         this.renderTooltip(guiGraphics, mouseX, mouseY);
     }

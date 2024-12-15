@@ -1,13 +1,16 @@
 package gg.moonflower.etched.api.sound.source;
 
+import com.mojang.util.UndashedUuid;
 import gg.moonflower.etched.api.sound.download.SoundDownloadSource;
 import gg.moonflower.etched.api.util.AsyncInputStream;
 import gg.moonflower.etched.api.util.DownloadProgressListener;
 import gg.moonflower.etched.api.util.ProgressTrackingInputStream;
 import gg.moonflower.etched.client.sound.SoundCache;
+import net.minecraft.Util;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.User;
 import net.minecraft.network.chat.Component;
+import net.minecraft.server.packs.PackType;
 import net.minecraft.util.HttpUtil;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -41,7 +44,7 @@ public interface AudioSource {
         Map<String, String> map = SoundDownloadSource.getDownloadHeaders();
         User user = Minecraft.getInstance().getUser();
         map.put("X-Minecraft-Username", user.getName());
-        map.put("X-Minecraft-UUID", user.getUuid());
+        map.put("X-Minecraft-UUID", UndashedUuid.toString(user.getProfileId()));
         return map;
     }
 
@@ -145,7 +148,7 @@ public interface AudioSource {
                 if (!type.isStream()) {
                     throw new IOException("The provided URL is a stream, but that is not supported");
                 }
-                return () -> new AsyncInputStream(url::openStream, 8192, 8, HttpUtil.DOWNLOAD_EXECUTOR);
+                return () -> new AsyncInputStream(url::openStream, 8192, 8, Util.nonCriticalIoPool());
             }
 
             // The cached file is still fresh, so only the metadata needs to be updated

@@ -43,12 +43,12 @@ public class ChannelMixin {
     }
 
     @Inject(method = "attachStaticBuffer", at = @At("HEAD"))
-    public void attachStaticBuffer(SoundBuffer soundBuffer, CallbackInfo ci) {
+    public void attachStaticBuffer(CallbackInfo ci) {
         this.etched$loaded.set(true);
     }
 
     @Inject(method = "attachBufferStream", at = @At("HEAD"))
-    public void attachBufferStream(AudioStream audioStream, CallbackInfo ci) {
+    public void attachBufferStream(CallbackInfo ci) {
         this.etched$loaded.set(true);
     }
 }

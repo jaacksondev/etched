@@ -92,7 +92,7 @@ public class BandcampSource implements SoundDownloadSource {
     }
 
     @Override
-    public List<URL> resolveUrl(String url, @Nullable DownloadProgressListener progressListener, Proxy proxy) throws IOException {
+    public Collection<URL> resolveUrl(String url, @Nullable DownloadProgressListener progressListener, Proxy proxy) throws IOException {
         return this.resolve(url, progressListener, proxy, json -> {
             if (progressListener != null) {
                 progressListener.progressStartRequest(RESOLVING_TRACKS);
@@ -112,7 +112,7 @@ public class BandcampSource implements SoundDownloadSource {
     }
 
     @Override
-    public List<TrackData> resolveTracks(String url, @Nullable DownloadProgressListener progressListener, Proxy proxy) throws IOException, JsonParseException {
+    public Collection<TrackData> resolveTracks(String url, @Nullable DownloadProgressListener progressListener, Proxy proxy) throws IOException, JsonParseException {
         return this.resolve(url, progressListener, proxy, json -> {
             int urlEnd = url.indexOf(".com/");
             if (urlEnd == -1) {
@@ -136,7 +136,7 @@ public class BandcampSource implements SoundDownloadSource {
                 }
                 return tracks;
             }
-            return Collections.singletonList(new TrackData(url, artist, Component.literal(title)));
+            return Collections.singleton(new TrackData(url, artist, Component.literal(title)));
         });
     }
 

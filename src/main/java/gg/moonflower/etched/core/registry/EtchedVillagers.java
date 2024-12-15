@@ -1,7 +1,6 @@
 package gg.moonflower.etched.core.registry;
 
 import com.google.common.collect.ImmutableSet;
-import com.mojang.datafixers.util.Pair;
 import gg.moonflower.etched.core.Etched;
 import gg.moonflower.etched.core.mixin.StructureTemplatePoolAccessor;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
@@ -23,6 +22,7 @@ import net.minecraft.world.entity.npc.VillagerProfession;
 import net.minecraft.world.entity.npc.VillagerTrades;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
+import net.minecraft.world.item.trading.ItemCost;
 import net.minecraft.world.item.trading.MerchantOffer;
 import net.minecraft.world.level.ItemLike;
 import net.minecraft.world.level.block.Blocks;
@@ -30,31 +30,30 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.levelgen.structure.pools.StructurePoolElement;
 import net.minecraft.world.level.levelgen.structure.pools.StructureTemplatePool;
 import net.minecraft.world.level.levelgen.structure.templatesystem.StructureProcessorList;
-import net.minecraftforge.event.server.ServerAboutToStartEvent;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.common.Mod;
-import net.minecraftforge.registries.DeferredRegister;
-import net.minecraftforge.registries.ForgeRegistries;
-import net.minecraftforge.registries.RegistryObject;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.EventBusSubscriber;
+import net.neoforged.neoforge.event.server.ServerAboutToStartEvent;
+import net.neoforged.neoforge.event.village.VillagerTradesEvent;
+import net.neoforged.neoforge.registries.DeferredHolder;
+import net.neoforged.neoforge.registries.DeferredRegister;
 import org.apache.commons.lang3.Validate;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 import java.util.function.Function;
-import java.util.function.Supplier;
 
-@Mod.EventBusSubscriber(modid = Etched.MOD_ID)
+@EventBusSubscriber(modid = Etched.MOD_ID)
 public class EtchedVillagers {
 
-    public static final DeferredRegister<PoiType> POI_REGISTRY = DeferredRegister.create(ForgeRegistries.POI_TYPES, Etched.MOD_ID);
-    public static final DeferredRegister<VillagerProfession> PROFESSION_REGISTRY = DeferredRegister.create(ForgeRegistries.VILLAGER_PROFESSIONS, Etched.MOD_ID);
+    public static final DeferredRegister<PoiType> POI_REGISTRY = DeferredRegister.create(BuiltInRegistries.POINT_OF_INTEREST_TYPE, Etched.MOD_ID);
+    public static final DeferredRegister<VillagerProfession> PROFESSION_REGISTRY = DeferredRegister.create(BuiltInRegistries.VILLAGER_PROFESSION, Etched.MOD_ID);
 
-    public static final RegistryObject<PoiType> BARD_POI = POI_REGISTRY.register("bard", () -> new PoiType(ImmutableSet.<BlockState>builder().addAll(Blocks.NOTE_BLOCK.getStateDefinition().getPossibleStates()).build(), 1, 1));
-    public static final RegistryObject<VillagerProfession> BARD = PROFESSION_REGISTRY.register("bard", () -> new VillagerProfession(Etched.MOD_ID + ":bard", poi -> poi.is(BARD_POI.getId()), poi -> poi.is(BARD_POI.getId()), ImmutableSet.of(), ImmutableSet.of(), null));
+    public static final DeferredHolder<PoiType, PoiType> BARD_POI = POI_REGISTRY.register("bard", () -> new PoiType(ImmutableSet.<BlockState>builder().addAll(Blocks.NOTE_BLOCK.getStateDefinition().getPossibleStates()).build(), 1, 1));
+    public static final DeferredHolder<VillagerProfession, VillagerProfession> BARD = PROFESSION_REGISTRY.register("bard", () -> new VillagerProfession(Etched.MOD_ID + ":bard", poi -> poi.is(BARD_POI.getId()), poi -> poi.is(BARD_POI.getId()), ImmutableSet.of(), ImmutableSet.of(), null));
 
     @SubscribeEvent
-    public static void onEvent(net.minecraftforge.event.village.VillagerTradesEvent event) {
+    public static void onEvent(VillagerTradesEvent event) {
         if (event.getType() != EtchedVillagers.BARD.get()) {
             return;
         }
@@ -77,11 +76,11 @@ public class EtchedVillagers {
         tier1.add(Items.MUSIC_DISC_CAT, 8, 1, 4, 20, true);
         tier1.add(Items.MUSIC_DISC_OTHERSIDE, 8, 1, 4, 20, true);
         tier1.add(Items.NOTE_BLOCK, 1, 2, 16, 2, true);
-        tier1.add(EtchedItems.MUSIC_LABEL, 4, 2, 16, 1, false);
+        tier1.add(EtchedItems.MUSIC_LABEL.asItem(), 4, 2, 16, 1, false);
 
         TradeRegistry tier2 = context.apply(2);
-        tier2.add(EtchedItems.BLANK_MUSIC_DISC, 28, 2, 12, 15, false);
-        tier2.add(EtchedBlocks.ETCHING_TABLE, 32, 1, 8, 15, false);
+        tier2.add(EtchedItems.BLANK_MUSIC_DISC.asItem(), 28, 2, 12, 15, false);
+        tier2.add(EtchedBlocks.ETCHING_TABLE.asItem(), 32, 1, 8, 15, false);
 
         TradeRegistry tier3 = context.apply(3);
         tier3.add(Blocks.CLAY, 6, 1, 16, 2, false);
@@ -93,15 +92,15 @@ public class EtchedVillagers {
 
         TradeRegistry tier4 = context.apply(4);
         tier3.add(Items.JUKEBOX, 26, 1, 4, 30, false);
-        tier4.add(EtchedItems.JUKEBOX_MINECART, 28, 1, 4, 30, false);
-        tier4.add(EtchedBlocks.ALBUM_JUKEBOX, 30, 1, 4, 30, false);
+        tier4.add(EtchedItems.JUKEBOX_MINECART.asItem(), 28, 1, 4, 30, false);
+        tier4.add(EtchedBlocks.ALBUM_JUKEBOX.asItem(), 30, 1, 4, 30, false);
 
         TradeRegistry tier5 = context.apply(5);
         tier5.add(Items.DIAMOND, 8, 1, 8, 40, true);
         tier5.add(Items.AMETHYST_SHARD, 1, 8, 10, 40, true);
 
         // sucks to suck forge
-        BuiltInRegistries.ITEM.getTag(ItemTags.MUSIC_DISCS).ifPresent(tag -> tag.stream().forEach(item -> tier5.add(item.value(), 10, 1, 4, 40, true)));
+        BuiltInRegistries.ITEM.getTag(ItemTags.CREEPER_DROP_MUSIC_DISCS).ifPresent(tag -> tag.stream().forEach(item -> tier5.add(item.value(), 10, 1, 4, 40, true)));
     }
 
     @SubscribeEvent
@@ -124,12 +123,12 @@ public class EtchedVillagers {
     }
 
     private static void createVillagePiece(Registry<StructureTemplatePool> templatePools, Registry<StructureProcessorList> processorLists, String village, String name, int houseId, int weight, ResourceKey<StructureProcessorList> zombieProcessor) {
-        createVillagePiece(templatePools, processorLists, village, name, houseId, weight, ProcessorLists.EMPTY, zombieProcessor);
+        createVillagePiece(templatePools, processorLists, village, name, houseId, weight, ResourceKey.create(Registries.PROCESSOR_LIST, ResourceLocation.withDefaultNamespace(name)), zombieProcessor);
     }
 
     private static void createVillagePiece(Registry<StructureTemplatePool> templatePools, Registry<StructureProcessorList> processorLists, String village, String name, int houseId, int weight, ResourceKey<StructureProcessorList> normalProcessor, ResourceKey<StructureProcessorList> zombieProcessor) {
-        EtchedVillagers.addToPool(templatePools.get(new ResourceLocation("village/" + village + "/houses")), new ResourceLocation(Etched.MOD_ID, "village/" + village + "/houses/" + village + "_" + name + "_" + houseId), processorLists.getHolder(normalProcessor).orElse(null), weight);
-        EtchedVillagers.addToPool(templatePools.get(new ResourceLocation("village/" + village + "/zombie/houses")), new ResourceLocation(Etched.MOD_ID, "village/" + village + "/houses/" + village + "_" + name + "_" + houseId), processorLists.getHolder(zombieProcessor).orElse(null), weight);
+        EtchedVillagers.addToPool(templatePools.get(ResourceLocation.withDefaultNamespace("village/" + village + "/houses")), Etched.etchedPath("village/" + village + "/houses/" + village + "_" + name + "_" + houseId), processorLists.getHolder(normalProcessor).orElse(null), weight);
+        EtchedVillagers.addToPool(templatePools.get(ResourceLocation.withDefaultNamespace("village/" + village + "/zombie/houses")), Etched.etchedPath("village/" + village + "/houses/" + village + "_" + name + "_" + houseId), processorLists.getHolder(zombieProcessor).orElse(null), weight);
     }
 
     private static void addToPool(@Nullable StructureTemplatePool pool, ResourceLocation pieceId, @Nullable Holder<StructureProcessorList> processorList, int weight) {
@@ -288,7 +287,7 @@ public class EtchedVillagers {
          * @param sellToVillager Whether the villager is buying or selling the item for emeralds
          */
         public void add(ItemLike item, int emeralds, int itemCount, int maxUses, int xpGain, boolean sellToVillager) {
-            this.add(new ItemTrade(() -> item, emeralds, itemCount, maxUses, xpGain, 0.05F, sellToVillager));
+            this.add(new ItemTrade(item, emeralds, itemCount, maxUses, xpGain, 0.05F, sellToVillager));
         }
 
         /**
@@ -303,42 +302,13 @@ public class EtchedVillagers {
          * @param sellToVillager  Whether the villager is buying or selling the item for emeralds
          */
         public void add(ItemLike item, int emeralds, int itemCount, int maxUses, int xpGain, float priceMultiplier, boolean sellToVillager) {
-            this.add(new ItemTrade(() -> item, emeralds, itemCount, maxUses, xpGain, priceMultiplier, sellToVillager));
-        }
-
-        /**
-         * Adds a simple trade for items or emeralds.
-         *
-         * @param item           The item to trade for as a supplier
-         * @param emeralds       The amount of emeralds to trade
-         * @param itemCount      The amount of the item to trade
-         * @param maxUses        The maximum amount of times this trade can be used before needing to reset
-         * @param xpGain         The amount of experience gained by this exchange
-         * @param sellToVillager Whether the villager is buying or selling the item for emeralds
-         */
-        public void add(Supplier<? extends ItemLike> item, int emeralds, int itemCount, int maxUses, int xpGain, boolean sellToVillager) {
-            this.add(new ItemTrade(item, emeralds, itemCount, maxUses, xpGain, 0.05F, sellToVillager));
-        }
-
-        /**
-         * Adds a simple trade for items or emeralds.
-         *
-         * @param item            The item to trade for as a supplier
-         * @param emeralds        The amount of emeralds to trade
-         * @param itemCount       The amount of the item to trade
-         * @param maxUses         The maximum amount of times this trade can be used before needing to reset
-         * @param xpGain          The amount of experience gained by this exchange
-         * @param priceMultiplier The multiplier for how much the price deviates
-         * @param sellToVillager  Whether the villager is buying or selling the item for emeralds
-         */
-        public void add(Supplier<? extends ItemLike> item, int emeralds, int itemCount, int maxUses, int xpGain, float priceMultiplier, boolean sellToVillager) {
             this.add(new ItemTrade(item, emeralds, itemCount, maxUses, xpGain, priceMultiplier, sellToVillager));
         }
     }
 
     private static class ItemTrade implements VillagerTrades.ItemListing {
 
-        private final Supplier<? extends ItemLike> item;
+        private final ItemLike item;
         private final int emeralds;
         private final int itemCount;
         private final int maxUses;
@@ -346,7 +316,7 @@ public class EtchedVillagers {
         private final float priceMultiplier;
         private final boolean sellToVillager;
 
-        private ItemTrade(Supplier<? extends ItemLike> Item, int emeralds, int itemCount, int maxUses, int xpGain, float priceMultiplier, boolean sellToVillager) {
+        private ItemTrade(ItemLike Item, int emeralds, int itemCount, int maxUses, int xpGain, float priceMultiplier, boolean sellToVillager) {
             this.item = Item;
             this.emeralds = emeralds;
             this.itemCount = itemCount;
@@ -358,10 +328,13 @@ public class EtchedVillagers {
 
         @Override
         public MerchantOffer getOffer(Entity entity, RandomSource random) {
-            ItemStack emeralds = new ItemStack(Items.EMERALD, this.emeralds);
-            ItemStack item = new ItemStack(this.item.get(), this.itemCount);
-
-            return new MerchantOffer(this.sellToVillager ? item : emeralds, this.sellToVillager ? emeralds : item, this.maxUses, this.xpGain, this.priceMultiplier);
+            if (this.sellToVillager) {
+                ItemStack item = new ItemStack(Items.EMERALD, this.emeralds);
+                return new MerchantOffer(new ItemCost(this.item, this.itemCount), item, this.maxUses, this.xpGain, this.priceMultiplier);
+            } else {
+                ItemStack item = new ItemStack(this.item, this.itemCount);
+                return new MerchantOffer(new ItemCost(Items.EMERALD, this.emeralds), item, this.maxUses, this.xpGain, this.priceMultiplier);
+            }
         }
     }
 }

@@ -1,9 +1,8 @@
 package gg.moonflower.etched.common.block;
 
+import com.mojang.serialization.MapCodec;
 import gg.moonflower.etched.common.blockentity.RadioBlockEntity;
 import gg.moonflower.etched.common.menu.RadioMenu;
-import gg.moonflower.etched.common.network.EtchedMessages;
-import gg.moonflower.etched.common.network.play.ClientboundSetUrlPacket;
 import gg.moonflower.etched.core.Etched;
 import gg.moonflower.etched.core.mixin.client.LevelRendererAccessor;
 import gg.moonflower.etched.core.registry.EtchedBlocks;
@@ -12,7 +11,6 @@ import net.minecraft.client.resources.sounds.SoundInstance;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.network.chat.Component;
-import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.util.Mth;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.*;
@@ -23,6 +21,7 @@ import net.minecraft.world.item.Items;
 import net.minecraft.world.item.context.BlockPlaceContext;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.LevelReader;
 import net.minecraft.world.level.block.*;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityTicker;
@@ -34,14 +33,15 @@ import net.minecraft.world.level.block.state.properties.BooleanProperty;
 import net.minecraft.world.level.block.state.properties.IntegerProperty;
 import net.minecraft.world.level.pathfinder.PathComputationType;
 import net.minecraft.world.phys.BlockHitResult;
+import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.VoxelShape;
-import net.minecraftforge.network.PacketDistributor;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.Map;
 
 public class RadioBlock extends BaseEntityBlock {
+
+    public static final MapCodec<RadioBlock> CODEC = simpleCodec(RadioBlock::new);
 
     public static final IntegerProperty ROTATION = BlockStateProperties.ROTATION_16;
     public static final BooleanProperty POWERED = BlockStateProperties.POWERED;
@@ -57,23 +57,30 @@ public class RadioBlock extends BaseEntityBlock {
     }
 
     @Override
-    public InteractionResult use(BlockState state, Level level, BlockPos pos, Player player, InteractionHand interactionHand, BlockHitResult blockHitResult) {
-        if (level.isClientSide()) {
-            return InteractionResult.SUCCESS;
-        }
-        ItemStack stack = player.getItemInHand(interactionHand);
-        if (stack.getItem() == Items.CAKE && !state.getValue(PORTAL)) {
+    protected MapCodec<? extends BaseEntityBlock> codec() {
+        return CODEC;
+    }
+
+    @Override
+    protected ItemInteractionResult useItemOn(ItemStack stack, BlockState state, Level level, BlockPos pos, Player player, InteractionHand hand, BlockHitResult hitResult) {
+        if (stack.is(Items.CAKE) && !state.getValue(PORTAL)) {
             if (!player.isCreative()) {
                 stack.shrink(1);
             }
             level.setBlock(pos, state.setValue(PORTAL, true), 3);
-            return InteractionResult.SUCCESS;
+            return ItemInteractionResult.sidedSuccess(level.isClientSide());
         }
-        player.openMenu(state.getMenuProvider(level, pos)).ifPresent(__ -> {
-            String url = level.getBlockEntity(pos) instanceof RadioBlockEntity be ? be.getUrl() : "";
-            EtchedMessages.PLAY.send(PacketDistributor.PLAYER.with(() -> (ServerPlayer) player), new ClientboundSetUrlPacket(url));
-        });
-        return InteractionResult.CONSUME;
+        // FIXME
+        if (!level.isClientSide()) {
+            MenuProvider menuProvider = state.getMenuProvider(level, pos);
+            if (menuProvider != null) {
+                String url = level.getBlockEntity(pos) instanceof RadioBlockEntity be ? be.getUrl() : "";
+                player.openMenu(menuProvider, buf -> {
+                    buf.writeUtf(url);
+                });
+            }
+        }
+        return ItemInteractionResult.sidedSuccess(level.isClientSide());
     }
 
     @Override
@@ -89,7 +96,6 @@ public class RadioBlock extends BaseEntityBlock {
             boolean bl2 = blockState.getValue(POWERED);
             if (bl2 != level.hasNeighborSignal(pos)) {
                 level.setBlock(pos, blockState.cycle(POWERED), 2);
-                level.sendBlockUpdated(pos, blockState, level.getBlockState(pos), 3);
             }
         }
     }
@@ -111,9 +117,7 @@ public class RadioBlock extends BaseEntityBlock {
 
     @Override
     public MenuProvider getMenuProvider(BlockState blockState, Level level, BlockPos blockPos) {
-        BlockEntity blockEntity = level.getBlockEntity(blockPos);
-        return new SimpleMenuProvider((menuId, playerInventory, player) -> new RadioMenu(menuId, playerInventory, ContainerLevelAccess.create(level, blockPos), blockEntity instanceof RadioBlockEntity ? ((RadioBlockEntity) blockEntity)::setUrl : url -> {
-        }), CONTAINER_TITLE);
+        return new SimpleMenuProvider((menuId, playerInventory, player) -> new RadioMenu(menuId, ContainerLevelAccess.create(level, blockPos)), CONTAINER_TITLE);
     }
 
     @Override
@@ -159,23 +163,22 @@ public class RadioBlock extends BaseEntityBlock {
     }
 
     @Override
-    public boolean isPathfindable(BlockState blockState, BlockGetter blockGetter, BlockPos blockPos, PathComputationType pathComputationType) {
+    protected boolean isPathfindable(BlockState state, PathComputationType pathComputationType) {
         return false;
     }
 
     @Override
-    public ItemStack getCloneItemStack(BlockGetter level, BlockPos pos, BlockState state) {
+    public ItemStack getCloneItemStack(BlockState state, HitResult target, LevelReader level, BlockPos pos, Player player) {
         return new ItemStack(state.getValue(PORTAL) ? EtchedBlocks.PORTAL_RADIO_ITEM.get() : EtchedBlocks.RADIO.get());
     }
 
     @Override
     public void animateTick(BlockState state, Level level, BlockPos pos, RandomSource random) {
-        if (!Etched.CLIENT_CONFIG.showNotes.get() || !level.getBlockState(pos.above()).isAir()) {
+        if (!level.getBlockState(pos.above()).isAir()) {
             return;
         }
 
-        BlockEntity blockEntity = level.getBlockEntity(pos);
-        if (!(blockEntity instanceof RadioBlockEntity radio)) {
+        if (!(level.getBlockEntity(pos) instanceof RadioBlockEntity radio)) {
             return;
         }
 
@@ -184,7 +187,7 @@ public class RadioBlock extends BaseEntityBlock {
         }
 
         Minecraft minecraft = Minecraft.getInstance();
-        Map<BlockPos, SoundInstance> sounds = ((LevelRendererAccessor) minecraft.levelRenderer).getPlayingRecords();
+        Map<BlockPos, SoundInstance> sounds = ((LevelRendererAccessor) minecraft.levelRenderer).getPlayingJukeboxSongs();
         if (sounds.containsKey(pos) && minecraft.getSoundManager().isActive(sounds.get(pos))) {
             level.addParticle(ParticleTypes.NOTE, pos.getX() + 0.5D, pos.getY() + 0.7D, pos.getZ() + 0.5D, random.nextInt(25) / 24D, 0, 0);
         }

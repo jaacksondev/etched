@@ -1,6 +1,5 @@
 package gg.moonflower.etched.api.sound;
 
-import com.mojang.blaze3d.audio.OggAudioStream;
 import gg.moonflower.etched.api.record.TrackData;
 import gg.moonflower.etched.api.sound.source.AudioSource;
 import gg.moonflower.etched.api.sound.stream.MonoWrapper;
@@ -49,7 +48,7 @@ public class AbstractOnlineSoundInstance extends AbstractSoundInstance {
     private final boolean stereo;
 
     public AbstractOnlineSoundInstance(String url, @Nullable String subtitle, int attenuationDistance, SoundSource source, DownloadProgressListener progressListener, AudioSource.AudioFileType type, boolean stereo) {
-        super(new ResourceLocation(Etched.MOD_ID, DigestUtils.sha1Hex(url)), source, SoundInstance.createUnseededRandom());
+        super(Etched.etchedPath(DigestUtils.sha1Hex(url)), source, SoundInstance.createUnseededRandom());
         this.url = url;
         this.subtitle = subtitle;
         this.attenuationDistance = attenuationDistance;
@@ -82,45 +81,44 @@ public class AbstractOnlineSoundInstance extends AbstractSoundInstance {
         }
 
         if (TrackData.isLocalSound(onlineSound.getURL())) {
-            WeighedSoundEvents weighedSoundEvents = Minecraft.getInstance().getSoundManager().getSoundEvent(new ResourceLocation(onlineSound.getURL()));
-            if (weighedSoundEvents == null) {
-                CompletableFuture<AudioStream> future = new CompletableFuture<>();
-                future.completeExceptionally(new FileNotFoundException("Unable to play unknown soundEvent: " + sound.getPath()));
-                return future;
-            }
-
-            return loader.getStream(weighedSoundEvents.getSound(this.random).getPath(), repeatInstantly).thenApply(MonoWrapper::new).handleAsync((stream, throwable) -> {
-                if (throwable != null) {
-                    LOGGER.error("Failed to load audio from client: {}", onlineSound.getURL(), throwable);
-                    onlineSound.getProgressListener().onFail();
-                    return EmptyAudioStream.INSTANCE;
+            ResourceLocation name = ResourceLocation.tryParse(onlineSound.getURL());
+            if (name != null) {
+                WeighedSoundEvents weighedSoundEvents = Minecraft.getInstance().getSoundManager().getSoundEvent(name);
+                if (weighedSoundEvents == null) {
+                    return CompletableFuture.failedFuture(new FileNotFoundException("Unable to play unknown soundEvent: " + sound.getPath()));
                 }
-                onlineSound.getProgressListener().onSuccess();
-                return stream;
-            }, Util.backgroundExecutor());
+
+                return loader.getStream(weighedSoundEvents.getSound(this.random).getPath(), repeatInstantly).thenApply(MonoWrapper::new).handleAsync((stream, throwable) -> {
+                    if (throwable != null) {
+                        LOGGER.error("Failed to load audio from client: {}", onlineSound.getURL(), throwable);
+                        onlineSound.getProgressListener().onFail();
+                        return EmptyAudioStream.INSTANCE;
+                    }
+                    onlineSound.getProgressListener().onSuccess();
+                    return stream;
+                }, Util.nonCriticalIoPool());
+            }
         }
 
         return SoundCache.getAudioStream(onlineSound.getURL(), onlineSound.getProgressListener(), onlineSound.getAudioFileType()).thenCompose(AudioSource::openStream).thenApplyAsync(stream -> {
             onlineSound.getProgressListener().progressStartLoading();
             try {
                 InputStream is = new BufferedInputStream(stream);
+                assert is.markSupported();
+                is.mark(4192);
 
                 // Try loading as OGG
                 try {
-                    is.mark(4192);
-                    return getStream(repeatInstantly ? new LoopingAudioStream(OggAudioStream::new, is) : new OggAudioStream(is), sound);
+                    return getStream(repeatInstantly ? new LoopingAudioStream(JOrbisAudioStream::new, is) : new JOrbisAudioStream(is), sound);
                 } catch (Exception e) {
-                    LOGGER.debug("Failed to load as OGG", e);
                     is.reset();
 
                     // Try loading as WAV
                     try {
-                        is.mark(4192);
                         AudioInputStream ais = WaveDataReader.getAudioInputStream(is);
                         AudioFormat format = ais.getFormat();
                         return getStream(repeatInstantly ? new LoopingAudioStream(input -> new RawAudioStream(format, input), ais) : new RawAudioStream(format, ais), sound);
                     } catch (Exception e1) {
-                        LOGGER.debug("Failed to load as WAV", e1);
                         is.reset();
 
                         // Try loading as MP3
@@ -128,7 +126,6 @@ public class AbstractOnlineSoundInstance extends AbstractSoundInstance {
                             Mp3InputStream mp3InputStream = new Mp3InputStream(is);
                             return getStream(repeatInstantly ? new LoopingAudioStream(input -> new RawAudioStream(mp3InputStream.getFormat(), input), mp3InputStream) : new RawAudioStream(mp3InputStream.getFormat(), mp3InputStream), sound);
                         } catch (Exception e2) {
-                            LOGGER.debug("Failed to load as MP3", e2);
                             UnsupportedAudioFileException cause = new UnsupportedAudioFileException("Could not load as OGG, WAV, OR MP3");
 
                             try {
@@ -148,7 +145,7 @@ public class AbstractOnlineSoundInstance extends AbstractSoundInstance {
             } catch (Exception e) {
                 throw new CompletionException(e);
             }
-        }, Util.backgroundExecutor()).handleAsync((stream, throwable) -> {
+        }, Util.nonCriticalIoPool()).handleAsync((stream, throwable) -> {
             if (throwable != null) {
                 if (throwable instanceof CompletionException e) {
                     throwable = e.getCause();
@@ -160,7 +157,7 @@ public class AbstractOnlineSoundInstance extends AbstractSoundInstance {
             }
             onlineSound.getProgressListener().onSuccess();
             return stream;
-        }, Util.backgroundExecutor());
+        }, Util.nonCriticalIoPool());
     }
 
     public static class OnlineSound extends Sound implements SoundStreamModifier {
@@ -171,7 +168,7 @@ public class AbstractOnlineSoundInstance extends AbstractSoundInstance {
         private final boolean stereo;
 
         public OnlineSound(ResourceLocation location, String url, int attenuationDistance, DownloadProgressListener progressListener, AudioSource.AudioFileType type, boolean stereo) {
-            super(location.toString(), ConstantFloat.of(1.0F), ConstantFloat.of(1.0F), 1, Type.FILE, true, false, attenuationDistance);
+            super(location, ConstantFloat.of(1.0F), ConstantFloat.of(1.0F), 1, Type.FILE, true, false, attenuationDistance);
             this.url = url;
             this.progressListener = progressListener;
             this.type = type;

@@ -2,7 +2,6 @@ package gg.moonflower.etched.common.sound.download;
 
 import gg.moonflower.etched.api.sound.download.SoundDownloadSource;
 import net.minecraft.Util;
-import net.minecraft.util.HttpUtil;
 import org.apache.commons.io.IOUtils;
 import org.jetbrains.annotations.Nullable;
 
@@ -110,7 +109,7 @@ public final class SoundCloudIdTracker {
                 } catch (Throwable e) {
                     throw new CompletionException(e);
                 }
-            }, HttpUtil.DOWNLOAD_EXECUTOR).thenApplyAsync(clientId -> {
+            }, Util.nonCriticalIoPool()).thenApplyAsync(clientId -> {
                 synchronized (LOCK) {
                     return currentId = clientId;
                 }

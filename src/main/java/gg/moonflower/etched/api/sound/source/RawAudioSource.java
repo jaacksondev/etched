@@ -21,7 +21,7 @@ public class RawAudioSource implements AudioSource {
     private CompletableFuture<InputStream> stream;
 
     public RawAudioSource(URL url, @Nullable DownloadProgressListener listener, boolean temporary, AudioFileType type) {
-        this.locationFuture = CompletableFuture.supplyAsync(() -> AudioSource.downloadTo(url, temporary, listener, type), HttpUtil.DOWNLOAD_EXECUTOR);
+        this.locationFuture = CompletableFuture.supplyAsync(() -> AudioSource.downloadTo(url, temporary, listener, type), Util.nonCriticalIoPool());
     }
 
     @Override

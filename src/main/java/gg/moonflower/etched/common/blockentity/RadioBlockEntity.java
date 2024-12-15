@@ -5,6 +5,7 @@ import gg.moonflower.etched.common.block.RadioBlock;
 import gg.moonflower.etched.core.registry.EtchedBlocks;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
@@ -50,24 +51,25 @@ public class RadioBlockEntity extends BlockEntity implements Clearable {
     }
 
     @Override
-    public void load(CompoundTag nbt) {
-        super.load(nbt);
-        this.url = nbt.contains("Url", Tag.TAG_STRING) ? nbt.getString("Url") : null;
+    protected void loadAdditional(CompoundTag tag, HolderLookup.Provider registries) {
+        super.loadAdditional(tag, registries);
+        this.url = tag.contains("Url", Tag.TAG_STRING) ? tag.getString("Url") : null;
         if (this.loaded) {
             SoundTracker.playRadio(this.url, this.getBlockState(), (ClientLevel) this.level, this.getBlockPos());
         }
     }
 
     @Override
-    public void saveAdditional(CompoundTag nbt) {
+    protected void saveAdditional(CompoundTag tag, HolderLookup.Provider registries) {
+        super.saveAdditional(tag, registries);
         if (this.url != null) {
-            nbt.putString("Url", this.url);
+            tag.putString("Url", this.url);
         }
     }
 
     @Override
-    public CompoundTag getUpdateTag() {
-        return this.saveWithoutMetadata();
+    public CompoundTag getUpdateTag(HolderLookup.Provider registries) {
+        return this.saveWithoutMetadata(registries);
     }
 
     @Nullable

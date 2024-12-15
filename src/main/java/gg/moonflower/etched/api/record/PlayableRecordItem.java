@@ -52,7 +52,7 @@ public abstract class PlayableRecordItem extends Item implements PlayableRecord 
             Player player = context.getPlayer();
             BlockEntity be = level.getBlockEntity(pos);
             if (be instanceof JukeboxBlockEntity jukeboxblockentity) {
-                jukeboxblockentity.setFirstItem(stack.copy());
+                jukeboxblockentity.setTheItem(stack.copy());
                 level.gameEvent(GameEvent.BLOCK_CHANGE, pos, GameEvent.Context.of(player, state));
             }
 
@@ -65,21 +65,22 @@ public abstract class PlayableRecordItem extends Item implements PlayableRecord 
         return InteractionResult.sidedSuccess(level.isClientSide());
     }
 
-    @Override
-    public void appendHoverText(ItemStack stack, @Nullable Level level, List<Component> list, TooltipFlag tooltipFlag) {
-        this.getAlbum(stack).ifPresent(track -> {
-            boolean album = this.getTrackCount(stack) > 1;
-            list.add(track.getDisplayName().copy().withStyle(ChatFormatting.GRAY));
-            SoundSourceManager.getBrandText(track.url())
-                    .map(component -> Component.literal("  ").append(component.copy()))
-                    .map(component -> album ? component.append(" ").append(ALBUM) : component)
-                    .ifPresentOrElse(list::add, () -> {
-                        if (album) {
-                            list.add(ALBUM);
-                        }
-                    });
-        });
-    }
+//    @Override
+//    public void appendHoverText(ItemStack stack, @Nullable Level level, List<Component> list, TooltipFlag tooltipFlag) {
+//        this.getAlbum(stack).ifPresent(track -> {
+//            boolean album = this.getTrackCount(stack) > 1;
+//            list.add(track.getDisplayName().copy().withStyle(ChatFormatting.GRAY));
+//            SoundSourceManager.getBrandText(track.url())
+//                    .map(component -> Component.literal("  ").append(component.copy()))
+//                    .map(component -> album ? component.append(" ").append(ALBUM) : component)
+//                    .ifPresentOrElse(list::add, () -> {
+//                        if (album) {
+//                            list.add(ALBUM);
+//                        }
+//                    });
+//        });
+//    }
+    // FIXME
 
     @Override
     public CompletableFuture<AlbumCover> getAlbumCover(ItemStack stack, Proxy proxy, ResourceManager resourceManager) {

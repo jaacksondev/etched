@@ -67,16 +67,16 @@ public class MinecartJukebox extends AbstractMinecart implements WorldlyContaine
     }
 
     @Override
-    protected void defineSynchedData() {
-        super.defineSynchedData();
-        this.entityData.define(DATA_ID_HAS_RECORD, false);
+    protected void defineSynchedData(SynchedEntityData.Builder builder) {
+        super.defineSynchedData(builder);
+        builder.define(DATA_ID_HAS_RECORD, false);
     }
 
     @Override
     public void tick() {
         super.tick();
         if (this.level().isClientSide()) {
-            if (Etched.CLIENT_CONFIG.showNotes.get() && this.random.nextInt(6) == 0) {
+            if (this.random.nextInt(6) == 0) {
                 SoundInstance instance = SoundTracker.getEntitySound(this.getId());
                 if (instance != null && Minecraft.getInstance().getSoundManager().isActive(instance)) {
                     this.level().addParticle(ParticleTypes.NOTE, this.getX(), this.getY() + 1.2D, this.getZ(), this.random.nextInt(25) / 24D, 0, 0);
@@ -90,16 +90,15 @@ public class MinecartJukebox extends AbstractMinecart implements WorldlyContaine
         ItemStack stack = player.getItemInHand(hand);
         if (this.entityData.get(DATA_ID_HAS_RECORD)) {
             if (!this.level().isClientSide()) {
-                ItemStack itemStack = this.record;
-                if (!itemStack.isEmpty()) {
+                if (!this.record.isEmpty()) {
                     this.clearContent();
-                    ItemEntity itemEntity = new ItemEntity(this.level(), this.getX(), this.getY() + 0.8, this.getZ(), itemStack.copy());
+                    ItemEntity itemEntity = new ItemEntity(this.level(), this.getX(), this.getY() + 0.8, this.getZ(), this.record.copy());
                     itemEntity.setDefaultPickUpDelay();
                     this.level().addFreshEntity(itemEntity);
                 }
             }
             return InteractionResult.sidedSuccess(this.level().isClientSide());
-        } else if (stack.getItem() instanceof PlayableRecord) {
+        } else if (PlayableRecord.isPlayableRecord(stack)) {
             if (!this.level().isClientSide()) {
                 this.setItem(0, stack.copy());
                 stack.shrink(1);
@@ -138,7 +137,7 @@ public class MinecartJukebox extends AbstractMinecart implements WorldlyContaine
         super.addAdditionalSaveData(nbt);
         nbt.putBoolean("HasRecord", this.entityData.get(DATA_ID_HAS_RECORD));
         if (!this.record.isEmpty()) {
-            nbt.put("RecordItem", this.record.save(new CompoundTag()));
+            nbt.put("RecordItem", this.record.save(this.registryAccess()));
         }
     }
 
@@ -147,7 +146,7 @@ public class MinecartJukebox extends AbstractMinecart implements WorldlyContaine
         super.readAdditionalSaveData(nbt);
         this.entityData.set(DATA_ID_HAS_RECORD, nbt.getBoolean("HasRecord"));
         if (nbt.contains("RecordItem", 10)) {
-            this.record = ItemStack.of(nbt.getCompound("RecordItem"));
+            this.record = ItemStack.parseOptional(this.registryAccess(), nbt.getCompound("RecordItem"));
         }
     }
 

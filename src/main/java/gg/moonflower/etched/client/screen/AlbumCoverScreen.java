@@ -12,7 +12,7 @@ import net.minecraft.world.entity.player.Inventory;
  */
 public class AlbumCoverScreen extends AbstractContainerScreen<AlbumCoverMenu> {
 
-    private static final ResourceLocation CONTAINER_LOCATION = new ResourceLocation("textures/gui/container/dispenser.png");
+    private static final ResourceLocation CONTAINER_LOCATION = ResourceLocation.withDefaultNamespace("textures/gui/container/dispenser.png");
 
     public AlbumCoverScreen(AlbumCoverMenu hopperMenu, Inventory inventory, Component component) {
         super(hopperMenu, inventory, component);
@@ -20,7 +20,7 @@ public class AlbumCoverScreen extends AbstractContainerScreen<AlbumCoverMenu> {
 
     @Override
     public void render(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
-        this.renderBackground(guiGraphics);
+        this.renderTransparentBackground(guiGraphics);
         super.render(guiGraphics, mouseX, mouseY, partialTick);
         this.renderTooltip(guiGraphics, mouseX, mouseY);
     }

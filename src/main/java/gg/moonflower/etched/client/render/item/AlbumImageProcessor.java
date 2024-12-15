@@ -5,7 +5,7 @@ import net.minecraft.Util;
 import org.jetbrains.annotations.ApiStatus;
 
 @ApiStatus.Internal
-public class AlbumImageProcessor {
+public final class AlbumImageProcessor {
 
     private static final int COLOR_DIVISIONS = 16;
     private static final float[] POW22 = Util.make(new float[256], fs -> {
@@ -13,6 +13,9 @@ public class AlbumImageProcessor {
             fs[i] = (float) Math.pow((float) i / 255.0F, 2.2);
         }
     });
+
+    private AlbumImageProcessor() {
+    }
 
     public static NativeImage apply(NativeImage image, NativeImage overlay) {
         NativeImage nativeImage2 = new NativeImage(overlay.getWidth(), overlay.getHeight(), true);

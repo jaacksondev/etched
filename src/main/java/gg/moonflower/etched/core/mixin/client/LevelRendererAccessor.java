@@ -12,5 +12,5 @@ import java.util.Map;
 public interface LevelRendererAccessor {
 
     @Accessor
-    Map<BlockPos, SoundInstance> getPlayingRecords();
+    Map<BlockPos, SoundInstance> getPlayingJukeboxSongs();
 }

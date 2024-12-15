@@ -1,8 +1,6 @@
 package gg.moonflower.etched.api.record;
 
 import com.mojang.blaze3d.platform.NativeImage;
-import gg.moonflower.etched.client.render.item.ImageAlbumCover;
-import gg.moonflower.etched.client.render.item.ModelAlbumCover;
 import net.minecraft.client.resources.model.ModelResourceLocation;
 import net.minecraft.resources.ResourceLocation;
 
@@ -12,10 +10,9 @@ import net.minecraft.resources.ResourceLocation;
  * @author Ocelot
  * @since 2.0.0
  */
-public interface AlbumCover {
+public sealed interface AlbumCover {
 
-    AlbumCover EMPTY = new AlbumCover() {
-    };
+    AlbumCover EMPTY = Empty.INSTANCE;
 
     /**
      * Creates a cover with an image. This will be turned into a model and rendered when ready.
@@ -44,6 +41,16 @@ public interface AlbumCover {
      * @return The cover instance
      */
     static AlbumCover of(ResourceLocation location) {
-        return new ModelAlbumCover(new ModelResourceLocation(location, "inventory"));
+        return new ModelAlbumCover(new ModelResourceLocation(location, "standalone"));
+    }
+
+    enum Empty implements AlbumCover{
+        INSTANCE
+    }
+
+    record ImageAlbumCover(NativeImage image) implements AlbumCover {
+    }
+
+    record ModelAlbumCover(ModelResourceLocation model) implements AlbumCover {
     }
 }

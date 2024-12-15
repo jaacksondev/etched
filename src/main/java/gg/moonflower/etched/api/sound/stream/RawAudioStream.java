@@ -1,6 +1,7 @@
 package gg.moonflower.etched.api.sound.stream;
 
 import net.minecraft.client.sounds.AudioStream;
+import org.lwjgl.BufferUtils;
 
 import javax.sound.sampled.AudioFormat;
 import java.io.IOException;
@@ -23,7 +24,7 @@ public class RawAudioStream implements AudioStream {
     }
 
     private static ByteBuffer convertAudioBytes(byte[] audio_bytes, boolean two_bytes_data, ByteOrder order) {
-        ByteBuffer dest = ByteBuffer.allocateDirect(audio_bytes.length);
+        ByteBuffer dest = BufferUtils.createByteBuffer(audio_bytes.length);
         dest.order(ByteOrder.nativeOrder());
         ByteBuffer src = ByteBuffer.wrap(audio_bytes);
         src.order(order);

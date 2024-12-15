@@ -1,0 +1,4 @@
+// 1.21.1	2024-12-14T15:42:01.2593318	Tags for minecraft:block mod id etched
+e8cbef34c89f99bcb805705ed56aed0084e8f5dc data/c/tags/block/villager_job_sites.json
+27bd1e871ac98b901881a285e71547c931338030 data/etched/tags/block/audio_providers.json
+0efc5d53eb5d565ebad6672497ef24e95b145beb data/minecraft/tags/block/mineable/axe.json

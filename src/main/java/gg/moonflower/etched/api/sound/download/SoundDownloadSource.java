@@ -7,6 +7,7 @@ import gg.moonflower.etched.core.Etched;
 import net.minecraft.SharedConstants;
 import net.minecraft.WorldVersion;
 import net.minecraft.network.chat.Component;
+import net.minecraft.server.packs.PackType;
 import net.minecraft.server.packs.resources.ResourceManager;
 import org.jetbrains.annotations.Nullable;
 
@@ -33,6 +34,7 @@ public interface SoundDownloadSource {
         WorldVersion version = SharedConstants.getCurrentVersion();
         map.put("X-Minecraft-Version", version.getName());
         map.put("X-Minecraft-Version-ID", version.getId());
+        map.put("X-Minecraft-Pack-Format", String.valueOf(version.getPackVersion(PackType.CLIENT_RESOURCES)));
         map.put("User-Agent", "Minecraft Java/" + version.getName());
         return map;
     }
@@ -47,7 +49,7 @@ public interface SoundDownloadSource {
      * @throws IOException        If any error occurs with requests
      * @throws JsonParseException If any error occurs when parsing
      */
-    List<URL> resolveUrl(String url, @Nullable DownloadProgressListener progressListener, Proxy proxy) throws IOException;
+    Collection<URL> resolveUrl(String url, @Nullable DownloadProgressListener progressListener, Proxy proxy) throws IOException;
 
     /**
      * Resolves the artist and title for the specified track. If the more than one tracks are returned, the first data will be treated as the album data.
@@ -59,7 +61,7 @@ public interface SoundDownloadSource {
      * @throws IOException        If any error occurs with requests
      * @throws JsonParseException If any error occurs when parsing
      */
-    List<TrackData> resolveTracks(String url, @Nullable DownloadProgressListener progressListener, Proxy proxy) throws IOException, JsonParseException;
+    Collection<TrackData> resolveTracks(String url, @Nullable DownloadProgressListener progressListener, Proxy proxy) throws IOException, JsonParseException;
 
     /**
      * Resolves the input stream to the cover for the specified album.

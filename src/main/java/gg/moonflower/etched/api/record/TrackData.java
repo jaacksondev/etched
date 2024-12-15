@@ -1,12 +1,13 @@
 package gg.moonflower.etched.api.record;
 
-import com.google.gson.JsonParseException;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import gg.moonflower.etched.core.Etched;
-import net.minecraft.nbt.CompoundTag;
-import net.minecraft.nbt.Tag;
+import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.ComponentSerialization;
+import net.minecraft.network.codec.ByteBufCodecs;
+import net.minecraft.network.codec.StreamCodec;
 import org.jetbrains.annotations.Nullable;
 
 import java.net.URI;
@@ -16,9 +17,9 @@ import java.util.regex.Pattern;
 /**
  * Information about track metadata for discs
  *
- * @param url The URL for the track
+ * @param url    The URL for the track
  * @param artist The name of the artist
- * @param title The title of the track
+ * @param title  The title of the track
  * @author Ocelot
  * @since 2.0.0
  */
@@ -28,23 +29,18 @@ public record TrackData(String url, String artist, Component title) {
     public static final Codec<TrackData> CODEC = RecordCodecBuilder.create(instance -> instance.group(
             Codec.STRING.fieldOf("Url").forGetter(TrackData::url),
             Codec.STRING.optionalFieldOf("Author", EMPTY.artist()).forGetter(TrackData::artist),
-            Codec.STRING.optionalFieldOf("Title", Component.Serializer.toJson(EMPTY.title())).<Component>xmap(json -> {
-                if (!json.startsWith("{")) {
-                    return Component.literal(json);
-                }
-                try {
-                    return Component.Serializer.fromJson(json);
-                } catch (JsonParseException e) {
-                    return Component.literal(json);
-                }
-            }, Component.Serializer::toJson).forGetter(TrackData::title)
+            ComponentSerialization.CODEC.optionalFieldOf("Title", EMPTY.title()).forGetter(TrackData::title)
     ).apply(instance, TrackData::new));
+    public static final StreamCodec<RegistryFriendlyByteBuf, TrackData> STREAM_CODEC = StreamCodec.composite(
+            ByteBufCodecs.STRING_UTF8,
+            TrackData::url,
+            ByteBufCodecs.STRING_UTF8,
+            TrackData::artist,
+            ComponentSerialization.STREAM_CODEC,
+            TrackData::title,
+            TrackData::new);
 
     private static final Pattern RESOURCE_LOCATION_PATTERN = Pattern.compile("[a-z0-9_.-]+");
-
-    public static boolean isValid(CompoundTag nbt) {
-        return nbt.contains("Url", Tag.TAG_STRING) && isValidURL(nbt.getString("Url"));
-    }
 
     /**
      * Checks to see if the specified string is a valid music URL.
@@ -89,17 +85,11 @@ public record TrackData(String url, String artist, Component title) {
         return true;
     }
 
-    public CompoundTag save(CompoundTag nbt) {
-        if (this.url != null) {
-            nbt.putString("Url", this.url);
-        }
-        if (this.title != null) {
-            nbt.putString("Title", Component.Serializer.toJson(this.title));
-        }
-        if (this.artist != null) {
-            nbt.putString("Author", this.artist);
-        }
-        return nbt;
+    /**
+     * @return Whether this track data is valid to be played
+     */
+    public boolean isValid() {
+        return isValidURL(this.url);
     }
 
     public TrackData withUrl(String url) {

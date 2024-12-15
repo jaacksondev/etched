@@ -7,18 +7,21 @@ import gg.moonflower.etched.api.sound.source.RawAudioSource;
 import gg.moonflower.etched.api.sound.source.StreamingAudioSource;
 import gg.moonflower.etched.api.util.DownloadProgressListener;
 import gg.moonflower.etched.client.AlbumCoverCache;
+import net.minecraft.Util;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.packs.resources.ResourceManager;
-import net.minecraft.util.HttpUtil;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
-import java.net.MalformedURLException;
 import java.net.Proxy;
+import java.net.URI;
 import java.net.URL;
-import java.util.*;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
 
@@ -52,32 +55,34 @@ public final class SoundSourceManager {
      * @param listener The listener for events
      * @param proxy    The connection proxy
      * @return A future for the source
-     * @throws MalformedURLException If any error occurs when resolving URLs
      */
-    public static CompletableFuture<AudioSource> getAudioSource(String url, @Nullable DownloadProgressListener listener, Proxy proxy, AudioSource.AudioFileType type) throws MalformedURLException {
+    public static CompletableFuture<AudioSource> getAudioSource(String url, @Nullable DownloadProgressListener listener, Proxy proxy, AudioSource.AudioFileType type) {
         Optional<SoundDownloadSource> sourceOptional = SOURCES.stream().filter(s -> s.isValidUrl(url)).findFirst();
-        CompletableFuture<List<URL>> urlFuture = sourceOptional.isPresent() ? CompletableFuture.supplyAsync(() -> {
-            SoundDownloadSource source = sourceOptional.get();
-            try {
-                return source.resolveUrl(url, listener, proxy);
-            } catch (Exception e) {
-                throw new CompletionException("Failed to connect to " + source.getApiName() + " API", e);
-            }
-        }, HttpUtil.DOWNLOAD_EXECUTOR) : CompletableFuture.completedFuture(Collections.singletonList(new URL(url)));
+        if (sourceOptional.isEmpty()) {
+            return CompletableFuture.supplyAsync(() -> {
+                try {
+                    return new RawAudioSource(new URI(url).toURL(), listener, false, type);
+                } catch (Throwable t) {
+                    throw new CompletionException("Failed to download audio: " + url, t);
+                }
+            }, Util.nonCriticalIoPool());
+        }
 
-        return urlFuture.thenApplyAsync(urls -> {
+        SoundDownloadSource source = sourceOptional.get();
+        return CompletableFuture.supplyAsync(() -> {
             try {
+                Collection<URL> urls = source.resolveUrl(url, listener, proxy);
                 if (urls.isEmpty()) {
                     throw new IOException("No audio data was found at the source!");
                 }
                 if (urls.size() == 1) {
-                    return new RawAudioSource(urls.get(0), listener, sourceOptional.map(s -> s.isTemporary(url)).orElse(false), type);
+                    return new RawAudioSource(urls.iterator().next(), listener, source.isTemporary(url), type);
                 }
-                return new StreamingAudioSource(urls.toArray(URL[]::new), listener, sourceOptional.map(s -> s.isTemporary(url)).orElse(false), type);
-            } catch (Exception e) {
-                throw new CompletionException(e);
+                return new StreamingAudioSource(urls.toArray(URL[]::new), listener, source.isTemporary(url), type);
+            } catch (Throwable t) {
+                throw new CompletionException("Failed to connect to " + source.getApiName() + " API", t);
             }
-        }, HttpUtil.DOWNLOAD_EXECUTOR);
+        }, Util.nonCriticalIoPool());
     }
 
     /**
@@ -87,17 +92,21 @@ public final class SoundSourceManager {
      * @param listener The listener for events
      * @param proxy    The connection proxy
      * @return The track information found or nothing
-     * @throws IOException If any error occurs when connecting to the sources
      */
-    public static CompletableFuture<TrackData[]> resolveTracks(String url, @Nullable DownloadProgressListener listener, Proxy proxy) throws IOException {
-        SoundDownloadSource source = SOURCES.stream().filter(s -> s.isValidUrl(url)).findFirst().orElseThrow(() -> new IOException("Unknown source for: " + url));
+    public static CompletableFuture<TrackData[]> resolveTracks(String url, @Nullable DownloadProgressListener listener, Proxy proxy) {
+        Optional<SoundDownloadSource> sourceOptional = SOURCES.stream().filter(s -> s.isValidUrl(url)).findFirst();
+        if (sourceOptional.isEmpty()) {
+            return CompletableFuture.failedFuture(new IOException("Unknown source for: " + url));
+        }
+
+        SoundDownloadSource source = sourceOptional.get();
         return CompletableFuture.supplyAsync(() -> {
             try {
                 return source.resolveTracks(url, listener, proxy).toArray(TrackData[]::new);
-            } catch (Exception e) {
-                throw new CompletionException(e);
+            } catch (Throwable t) {
+                throw new CompletionException("Failed to connect to " + source.getApiName() + " API", t);
             }
-        }, HttpUtil.DOWNLOAD_EXECUTOR);
+        }, Util.nonCriticalIoPool());
     }
 
     /**
@@ -109,14 +118,21 @@ public final class SoundSourceManager {
      * @return The album cover found or nothing
      */
     public static CompletableFuture<AlbumCover> resolveAlbumCover(String url, @Nullable DownloadProgressListener listener, Proxy proxy, ResourceManager resourceManager) {
-        return CompletableFuture.supplyAsync(() -> SOURCES.stream().filter(s -> s.isValidUrl(url)).findFirst().flatMap(source -> {
+        Optional<SoundDownloadSource> sourceOptional = SOURCES.stream().filter(s -> s.isValidUrl(url)).findFirst();
+        if (sourceOptional.isEmpty()) {
+            return CompletableFuture.completedFuture(AlbumCover.EMPTY);
+        }
+
+        SoundDownloadSource source = sourceOptional.get();
+        return CompletableFuture.supplyAsync(() -> {
             try {
-                return source.resolveAlbumCover(url, listener, proxy, resourceManager);
-            } catch (Exception e) {
-                LOGGER.error("Failed to connect to " + source.getApiName() + " API", e);
-                return Optional.empty();
+                Optional<String> coverUrl = source.resolveAlbumCover(url, listener, proxy, resourceManager);
+                return coverUrl.map(AlbumCoverCache::requestResource).orElseGet(() -> CompletableFuture.completedFuture(AlbumCover.EMPTY));
+            } catch (Throwable t) {
+                LOGGER.error("Failed to connect to {} API", source.getApiName(), t);
+                return CompletableFuture.completedFuture(AlbumCover.EMPTY);
             }
-        }), HttpUtil.DOWNLOAD_EXECUTOR).thenCompose(coverUrl -> coverUrl.map(AlbumCoverCache::requestResource).orElseGet(() -> CompletableFuture.completedFuture(AlbumCover.EMPTY)));
+        }, Util.nonCriticalIoPool()).thenCompose(future -> future);
     }
 
     /**
