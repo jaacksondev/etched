@@ -43,19 +43,29 @@ public class BoomboxItem extends Item implements ContainerItem {
 
     public static void onLivingEntityUpdateClient(LivingEntity entity) {
         ItemStack newPlayingRecord = ItemStack.EMPTY;
-        for (InteractionHand hand : InteractionHand.values()) {
-            ItemStack stack = entity.getItemInHand(hand);
-            if (hasRecord(stack) && !stack.has(EtchedComponents.PAUSED)) {
-                newPlayingRecord = getRecord(stack);
-                break;
+
+        if (entity instanceof Player player && Minecraft.getInstance().cameraEntity == entity) {
+            ItemStack carried = player.inventoryMenu.getCarried();
+            if (hasRecord(carried) && !carried.has(EtchedComponents.PAUSED)) {
+                newPlayingRecord = getRecord(carried);
+            }
+        }
+
+        if (newPlayingRecord.isEmpty()) {
+            for (InteractionHand hand : InteractionHand.values()) {
+                ItemStack stack = entity.getItemInHand(hand);
+                if (hasRecord(stack) && !stack.has(EtchedComponents.PAUSED)) {
+                    newPlayingRecord = getRecord(stack);
+                    break;
+                }
             }
         }
 
         if (entity instanceof Player player && newPlayingRecord.isEmpty() && Minecraft.getInstance().cameraEntity == entity) {
-            Inventory inventory = player.getInventory();
-            for (ItemStack stack : inventory.items) {
+            for (ItemStack stack : player.getInventory().items) {
                 if (hasRecord(stack) && !stack.has(EtchedComponents.PAUSED)) {
                     newPlayingRecord = getRecord(stack);
+                    break;
                 }
             }
         }
