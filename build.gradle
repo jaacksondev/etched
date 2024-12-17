@@ -11,6 +11,9 @@ base {
 version = project.mod_version
 group = project.maven_group
 
+sourceCompatibility = 17
+targetCompatibility = 17
+
 loom {
     accessWidenerPath = file("src/main/resources/${project.mod_id}.accesswidener")
 
