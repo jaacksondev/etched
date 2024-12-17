@@ -179,7 +179,7 @@ public class SoundCloudSource implements SoundDownloadSource {
         return this.validCache.computeIfAbsent(url, key -> {
             try {
                 String host = new URI(key).getHost();
-                return "soundcloud.com".equals(host);
+                return host != null && host.endsWith("soundcloud.com");
             } catch (URISyntaxException e) {
                 return false;
             }
