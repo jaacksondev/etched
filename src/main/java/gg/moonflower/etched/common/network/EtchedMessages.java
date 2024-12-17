@@ -7,11 +7,15 @@ import gg.moonflower.etched.core.Etched;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
+import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
+import net.neoforged.fml.loading.FMLLoader;
 import net.neoforged.neoforge.network.event.RegisterPayloadHandlersEvent;
 import net.neoforged.neoforge.network.handling.IPayloadHandler;
 import net.neoforged.neoforge.network.registration.PayloadRegistrar;
+
+import java.util.function.Supplier;
 
 @EventBusSubscriber(modid = Etched.MOD_ID, bus = EventBusSubscriber.Bus.MOD)
 public class EtchedMessages {
@@ -21,16 +25,21 @@ public class EtchedMessages {
         PayloadRegistrar registrar = event.registrar("4");
 
         // Client
-        registrar.playToClient(ClientboundInvalidEtchUrlPacket.TYPE, ClientboundInvalidEtchUrlPacket.CODEC, EtchedClientPlayPacketHandler::handleSetInvalidEtch);
-        registrar.playToClient(ClientboundPlayBlockMusicPacket.TYPE, ClientboundPlayBlockMusicPacket.CODEC, EtchedClientPlayPacketHandler::handlePlayBlockMusicPacket);
-        registrar.playToClient(ClientboundPlayEntityMusicPacket.TYPE, ClientboundPlayEntityMusicPacket.CODEC, EtchedClientPlayPacketHandler::handlePlayEntityMusicPacket);
+        registrar.playToClient(ClientboundInvalidEtchUrlPacket.TYPE, ClientboundInvalidEtchUrlPacket.CODEC, clientHandler(() -> EtchedClientPlayPacketHandler::handleSetInvalidEtch));
+        registrar.playToClient(ClientboundPlayBlockMusicPacket.TYPE, ClientboundPlayBlockMusicPacket.CODEC, clientHandler(() -> EtchedClientPlayPacketHandler::handlePlayBlockMusicPacket));
+        registrar.playToClient(ClientboundPlayEntityMusicPacket.TYPE, ClientboundPlayEntityMusicPacket.CODEC, clientHandler(() -> EtchedClientPlayPacketHandler::handlePlayEntityMusicPacket));
 
         // Server
         registrar.playToServer(ServerboundEditMusicLabelPacket.TYPE, ServerboundEditMusicLabelPacket.CODEC, EtchedServerPlayPacketHandler::handleEditMusicLabel);
 
         // Bidirectional
-        registerBidirectional(registrar, SetAlbumJukeboxTrackPacket.TYPE, SetAlbumJukeboxTrackPacket.CODEC, EtchedClientPlayPacketHandler::handleSetAlbumJukeboxTrack, EtchedServerPlayPacketHandler::handleSetAlbumJukeboxTrack);
-        registerBidirectional(registrar, SetUrlPacket.TYPE, SetUrlPacket.CODEC, EtchedClientPlayPacketHandler::handleSetUrl, EtchedServerPlayPacketHandler::handleSetUrl);
+        registerBidirectional(registrar, SetAlbumJukeboxTrackPacket.TYPE, SetAlbumJukeboxTrackPacket.CODEC, clientHandler(() -> EtchedClientPlayPacketHandler::handleSetAlbumJukeboxTrack), EtchedServerPlayPacketHandler::handleSetAlbumJukeboxTrack);
+        registerBidirectional(registrar, SetUrlPacket.TYPE, SetUrlPacket.CODEC, clientHandler(() -> EtchedClientPlayPacketHandler::handleSetUrl), EtchedServerPlayPacketHandler::handleSetUrl);
+    }
+
+    private static <T extends CustomPacketPayload> IPayloadHandler<T> clientHandler(Supplier<IPayloadHandler<T>> handler) {
+        return FMLLoader.getDist() == Dist.CLIENT ? handler.get() : (payload, context) -> {
+        };
     }
 
     private static <T extends CustomPacketPayload> void registerBidirectional(PayloadRegistrar registrar, CustomPacketPayload.Type<T> type, StreamCodec<? super RegistryFriendlyByteBuf, T> reader, IPayloadHandler<T> clientHandler, IPayloadHandler<T> serverHandler) {
