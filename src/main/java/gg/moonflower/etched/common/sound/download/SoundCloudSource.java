@@ -24,6 +24,8 @@ import java.io.InputStreamReader;
 import java.net.*;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * @author Ocelot
@@ -32,6 +34,7 @@ public class SoundCloudSource implements SoundDownloadSource {
 
     static final Logger LOGGER = LogManager.getLogger();
     private static final Component BRAND = Component.translatable("sound_source." + Etched.MOD_ID + ".sound_cloud").withStyle(style -> style.withColor(TextColor.fromRgb(0xFF5500)));
+    private static final Pattern PATTERN = Pattern.compile("(https?://)(.*\\.)*(soundcloud\\.com.*)");
 
     private final Map<String, Boolean> validCache = new WeakHashMap<>();
 
@@ -77,6 +80,11 @@ public class SoundCloudSource implements SoundDownloadSource {
     }
 
     private <T> T resolve(String url, @Nullable DownloadProgressListener progressListener, Proxy proxy, SourceRequest<T> function) throws IOException, JsonParseException {
+        Matcher matcher = PATTERN.matcher(url);
+        if (matcher.find()) {
+            url = matcher.group(1) + matcher.group(3);
+        }
+
         try (InputStreamReader reader = new InputStreamReader(this.get("https://api-v2.soundcloud.com/resolve?url=" + URLEncoder.encode(url, StandardCharsets.UTF_8), progressListener, proxy, 0, true))) {
             JsonObject json = JsonParser.parseReader(reader).getAsJsonObject();
 
@@ -153,7 +161,7 @@ public class SoundCloudSource implements SoundDownloadSource {
                         String trackTitle = GsonHelper.getAsString(trackJson, "title");
                         tracks.add(new TrackData(trackUrl, trackArtist, Component.literal(trackTitle)));
                     } catch (JsonParseException e) {
-                        LOGGER.error("Failed to parse track: " + url + "[" + i + "]", e);
+                        LOGGER.error("Failed to parse track: {}[{}]", url, i, e);
                     }
                 }
 
