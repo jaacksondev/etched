@@ -154,7 +154,7 @@ public class AlbumCoverItemRenderer extends BlockEntityWithoutLevelRenderer impl
         if (stack.isEmpty()) {
             return;
         }
-        ModelData model = stack.getTagElement("CoverRecord") == null ? this.data.blank : this.covers.computeIfAbsent(stack.getTagElement("CoverRecord"), __ -> {
+        ModelData model = stack.getTagElement("CoverRecord") == null ? this.data.defaultCover : this.covers.computeIfAbsent(stack.getTagElement("CoverRecord"), __ -> {
             ItemStack coverStack = AlbumCoverItem.getCoverStack(stack).orElse(ItemStack.EMPTY);
             if (!coverStack.isEmpty() && coverStack.getItem() instanceof PlayableRecord) {
                 return ((PlayableRecord) coverStack.getItem()).getAlbumCover(coverStack, Minecraft.getInstance().getProxy(), Minecraft.getInstance().getResourceManager()).thenApply(cover -> ModelData.of(cover).orElse(this.data.defaultCover)).exceptionally(e -> {
@@ -162,7 +162,7 @@ public class AlbumCoverItemRenderer extends BlockEntityWithoutLevelRenderer impl
                     return this.data.defaultCover;
                 });
             }
-            return CompletableFuture.completedFuture(this.data.blank);
+            return CompletableFuture.completedFuture(this.data.defaultCover);
         }).getNow(this.data.defaultCover);
 
         poseStack.pushPose();

@@ -364,10 +364,7 @@ public class EtchingMenu extends AbstractContainerMenu {
                         this.urlId %= 1000;
                         this.broadcastChanges();
                     }
-                }, level.getServer()).exceptionally(e -> {
-                    e.printStackTrace();
-                    return null;
-                });
+                }, level.getServer()).exceptionally(unused -> null);
             }
         }
     }
