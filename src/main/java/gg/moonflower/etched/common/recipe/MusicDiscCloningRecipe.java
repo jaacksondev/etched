@@ -4,7 +4,6 @@ import gg.moonflower.etched.core.registry.EtchedItems;
 import gg.moonflower.etched.core.registry.EtchedRecipes;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.core.NonNullList;
-import net.minecraft.tags.ItemTags;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.CraftingBookCategory;
 import net.minecraft.world.item.crafting.CraftingInput;

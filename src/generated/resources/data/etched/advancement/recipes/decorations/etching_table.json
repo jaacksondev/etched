@@ -11,6 +11,16 @@
       },
       "trigger": "minecraft:inventory_changed"
     },
+    "has_jukebox": {
+      "conditions": {
+        "items": [
+          {
+            "items": "minecraft:jukebox"
+          }
+        ]
+      },
+      "trigger": "minecraft:inventory_changed"
+    },
     "has_music_label": {
       "conditions": {
         "items": [
@@ -31,6 +41,7 @@
   "requirements": [
     [
       "has_the_recipe",
+      "has_jukebox",
       "has_blank_music_disc",
       "has_music_label"
     ]

@@ -1,10 +1,10 @@
-// 1.21.1	2024-12-14T16:18:52.0433061	Recipes
+// 1.21.1	2024-12-16T20:26:35.9896165	Recipes
 7717bfe8b7443470a0b6fc652fbee78f3ee556c2 data/etched/advancement/recipes/decorations/album_jukebox.json
-2e07e23930e8cd1dbdf8f66dbf0d10f261db380c data/etched/advancement/recipes/decorations/etching_table.json
-7f5ab577afebf2b4ac49f69f79eddc8c3acd8a38 data/etched/advancement/recipes/decorations/radio.json
-3f1c7f16552dbc25cf23a59d5098f0fda2f9ad00 data/etched/advancement/recipes/tools/album_cover.json
+06d90c3210a6c874eab7126a16d094924387dbb2 data/etched/advancement/recipes/decorations/etching_table.json
+eddb69090957a2a8a0b19a1869984757db02538b data/etched/advancement/recipes/decorations/radio.json
+0b36b3fb7c952f025c30993e798f177f0e93f9ef data/etched/advancement/recipes/tools/album_cover.json
 d7e4a75dad7f700a661f10e0f0b886375503c68c data/etched/advancement/recipes/tools/blank_music_disc.json
-8a34dc6d917203b35525a31331e20b2019e81d4f data/etched/advancement/recipes/tools/boombox.json
+c080592d6087d6fd2574db3f701f44c290c555d4 data/etched/advancement/recipes/tools/boombox.json
 642959a2add9d3d9edaba2094278ae1145f5e3a9 data/etched/advancement/recipes/tools/music_label.json
 6f4734648d23849d1e7f0a789625edf09266e46f data/etched/advancement/recipes/transportation/jukebox_minecart.json
 907e6fb1bb17ccafccc596d14946fd399cb3a50d data/etched/recipe/album_cover.json

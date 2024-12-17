@@ -20,7 +20,10 @@
     "NoteBlockMixin",
     "StructureTemplatePoolAccessor",
     "VillagerGoalPackagesMixin",
-    "component.JukeboxSongMixin"
+    "component.JukeboxSongMixin",
+    "jukebox.JukeboxBlockEntityMixin",
+    "jukebox.JukeboxPlayableMixin",
+    "jukebox.JukeboxSongPlayerAccessor"
   ],
   "injectors": {
     "defaultRequire": 1

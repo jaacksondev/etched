@@ -1,8 +1,8 @@
 package gg.moonflower.etched.core.registry;
 
-import gg.moonflower.etched.common.recipe.MusicLabelMergeRecipe;
 import gg.moonflower.etched.common.recipe.MusicDiscCloningRecipe;
 import gg.moonflower.etched.common.recipe.MusicLabelDyeRecipe;
+import gg.moonflower.etched.common.recipe.MusicLabelMergeRecipe;
 import gg.moonflower.etched.core.Etched;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.world.item.crafting.RecipeSerializer;

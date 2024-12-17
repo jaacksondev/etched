@@ -10,7 +10,6 @@ import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.animal.Parrot;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.level.block.Blocks;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.Unique;
@@ -46,7 +45,7 @@ public abstract class ParrotMixin extends Entity {
 
     @Inject(method = "aiStep", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/entity/animal/ShoulderRidingEntity;aiStep()V"))
     public void addAudioProviders(CallbackInfo ci) {
-        if (this.etched$musicPos == null || !this.etched$musicPos.closerToCenterThan(this.position(), 3.46) || !this.level().getBlockState(this.etched$musicPos).is(EtchedTags.AUDIO_PROVIDER)) {
+        if (this.etched$musicPos == null || !this.etched$musicPos.closerToCenterThan(this.position(), 3.46) || !this.level().getBlockState(this.etched$musicPos).is(EtchedTags.RECORD_PLAYERS)) {
             this.partyParrot = false;
             this.jukebox = null;
         } else {

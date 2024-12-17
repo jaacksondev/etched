@@ -56,7 +56,7 @@ public class SoundTracker {
     }
 
     private static synchronized void setRecordPlayingNearby(CommonLevelAccessor level, BlockPos pos, boolean playing) {
-        if (level.getBlockState(pos).is(EtchedTags.AUDIO_PROVIDER)) {
+        if (level.getBlockState(pos).is(EtchedTags.RECORD_PLAYERS)) {
             for (LivingEntity livingEntity : level.getEntitiesOfClass(LivingEntity.class, new AABB(pos).inflate(3.0D))) {
                 livingEntity.setRecordPlayingNearby(pos, playing);
             }
@@ -111,13 +111,17 @@ public class SoundTracker {
             return null;
         }
 
-        return new OnlineRecordSoundInstance(url, entity, attenuationDistance, new MusicDownloadListener(title, entity::getX, entity::getY, entity::getZ) {
+        BlockState aboveState = entity.level().getBlockState(entity.blockPosition().above());
+        boolean muffled = aboveState.is(BlockTags.WOOL);
+        boolean hidden = !aboveState.isAir();
+
+        return new OnlineRecordSoundInstance(url, entity, muffled ? 2.0F : 4.0F, muffled ? attenuationDistance / 2 : attenuationDistance, new MusicDownloadListener(title, entity::getX, entity::getY, entity::getZ) {
             @Override
             public void onSuccess() {
                 if (!entity.isAlive() || !ENTITY_PLAYING_SOUNDS.containsKey(entity.getId())) {
                     this.clearComponent();
                 } else {
-                    if (PlayableRecord.canShowMessage(entity.getX(), entity.getY(), entity.getZ())) {
+                    if (!hidden && PlayableRecord.canShowMessage(entity.getX(), entity.getY(), entity.getZ())) {
                         Minecraft.getInstance().gui.setNowPlaying(title);
                     }
                 }

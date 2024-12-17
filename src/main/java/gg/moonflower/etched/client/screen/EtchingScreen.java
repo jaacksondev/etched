@@ -151,8 +151,6 @@ public class EtchingScreen extends AbstractContainerScreen<EtchingMenu> implemen
 
     @Override
     protected void renderBg(GuiGraphics guiGraphics, float partialTick, int mouseX, int mouseY) {
-        this.renderTransparentBackground(guiGraphics);
-
         guiGraphics.blit(TEXTURE, this.leftPos, this.topPos, 0, 0, this.imageWidth, this.imageHeight);
         if ((!this.url.getValue().isEmpty() && !TrackData.isValidURL(this.url.getValue())) || !this.invalidReason.isEmpty() || (this.discStack.getItem() != EtchedItems.ETCHED_MUSIC_DISC.get() && ((!this.discStack.isEmpty() && this.labelStack.isEmpty()) || (this.discStack.isEmpty() && !this.labelStack.isEmpty())))) {
             guiGraphics.blit(TEXTURE, this.leftPos + 83, this.topPos + 44, 0, 226, 27, 17);

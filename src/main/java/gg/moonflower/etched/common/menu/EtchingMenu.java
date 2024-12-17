@@ -266,13 +266,24 @@ public class EtchingMenu extends AbstractContainerMenu implements UrlMenu {
             ItemStack labelStack = this.labelSlot.getItem().copy();
 
             if (discStack.is(EtchedItems.ETCHED_MUSIC_DISC.get()) || (!discStack.isEmpty() && !labelStack.isEmpty())) {
-                if (this.url == null && !discStack.isEmpty()) {
-                    this.url = PlayableRecord.getAlbum(discStack).map(TrackData::url).orElse(null);
+                TrackData recordData = TrackData.EMPTY;
+                Optional<TrackData> optional = PlayableRecord.getAlbum(discStack);
+                if (optional.isPresent()) {
+                    recordData = optional.get();
+                    if (this.url == null) {
+                        this.url = recordData.url();
+                    }
                 }
                 if (!TrackData.isValidURL(this.url)) {
                     return;
                 }
 
+                MusicLabelComponent label = labelStack.get(EtchedComponents.MUSIC_LABEL);
+                if (label != null) {
+                    recordData = recordData.withArtist(label.artist()).withTitle(label.title());
+                }
+
+                TrackData album = recordData;
                 int currentId = this.currentRequestId = this.urlId;
                 this.currentRequest = CompletableFuture.supplyAsync(() -> {
                     ItemStack resultStack;
@@ -294,12 +305,7 @@ public class EtchingMenu extends AbstractContainerMenu implements UrlMenu {
                         secondaryLabelColor = discAppearance.labelSecondaryColor();
                     }
 
-                    TrackData album = null;
-                    TrackData[] data = new TrackData[]{TrackData.EMPTY};
-                    if (!labelStack.isEmpty()) {
-                        MusicLabelComponent label = labelStack.getOrDefault(EtchedComponents.MUSIC_LABEL, MusicLabelComponent.DEFAULT);
-                        data[0] = data[0].withTitle(label.title()).withArtist(label.artist());
-                    }
+                    TrackData[] data = new TrackData[]{album};
 
                     if (SoundSourceManager.isValidUrl(this.url)) {
                         try {
@@ -310,7 +316,7 @@ public class EtchingMenu extends AbstractContainerMenu implements UrlMenu {
                             if (tracks.length == 1) {
                                 data = tracks;
                             } else {
-                                album = tracks[0];
+                                resultStack.set(EtchedComponents.ALBUM, tracks[0]);
                                 data = Arrays.copyOfRange(tracks, 1, tracks.length);
                             }
                         } catch (Exception e) {
@@ -345,22 +351,13 @@ public class EtchingMenu extends AbstractContainerMenu implements UrlMenu {
                         discColor = discStackColor.rgb();
                     }
 
-                    MusicLabelComponent label = labelStack.getOrDefault(EtchedComponents.MUSIC_LABEL, MusicLabelComponent.DEFAULT);
-                    if (!labelStack.isEmpty()) {
-                        primaryLabelColor = label.primaryColor();
-                        secondaryLabelColor = label.secondaryColor();
-                    }
-
                     for (int i = 0; i < data.length; i++) {
                         TrackData trackData = data[i];
                         if (trackData.artist().equals(TrackData.EMPTY.artist())) {
-                            data[i] = trackData.withArtist(label.artist());
+                            data[i] = trackData.withArtist(album.artist());
                         }
                     }
 
-                    if (album != null) {
-                        resultStack.set(EtchedComponents.ALBUM, album);
-                    }
                     resultStack.set(EtchedComponents.MUSIC, new MusicTrackComponent(Arrays.asList(data)));
                     resultStack.set(EtchedComponents.DISC_APPEARANCE, new DiscAppearanceComponent(DiscAppearanceComponent.LabelPattern.values()[this.labelIndex.get()], discColor, primaryLabelColor, secondaryLabelColor));
 

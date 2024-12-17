@@ -84,7 +84,6 @@ public class AlbumJukeboxScreen extends AbstractContainerScreen<AlbumJukeboxMenu
 
     @Override
     public void render(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
-        this.renderTransparentBackground(graphics);
         super.render(graphics, mouseX, mouseY, partialTick);
         this.renderTooltip(graphics, mouseX, mouseY);
     }

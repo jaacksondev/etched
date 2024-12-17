@@ -15,7 +15,6 @@ import net.minecraft.tags.ItemTags;
 import net.minecraft.tags.TagKey;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.Items;
-import net.minecraft.world.item.crafting.CustomRecipe;
 import net.minecraft.world.item.crafting.Ingredient;
 import net.minecraft.world.level.block.Blocks;
 import net.neoforged.neoforge.common.Tags;
@@ -60,6 +59,7 @@ public class EtchedRecipeProvider extends RecipeProvider {
                 .pattern("IRI")
                 .pattern("IJI")
                 .unlockedBy("has_jukebox", has(Blocks.JUKEBOX))
+                .unlockedBy("has_music_disc", has(Tags.Items.MUSIC_DISCS))
                 .save(recipeOutput);
         ShapedRecipeBuilder.shaped(RecipeCategory.TOOLS, EtchedItems.ALBUM_COVER)
                 .define('P', paperTag)
@@ -68,6 +68,7 @@ public class EtchedRecipeProvider extends RecipeProvider {
                 .pattern("PMP")
                 .pattern("PPP")
                 .unlockedBy("has_etched_music_disc", has(EtchedItems.ETCHED_MUSIC_DISC))
+                .unlockedBy("has_music_label", has(EtchedItems.MUSIC_LABEL))
                 .save(recipeOutput);
 
         ShapedRecipeBuilder.shaped(RecipeCategory.DECORATIONS, EtchedBlocks.ETCHING_TABLE)
@@ -76,6 +77,7 @@ public class EtchedRecipeProvider extends RecipeProvider {
                 .define('P', ItemTags.PLANKS)
                 .pattern(" DI")
                 .pattern("PPP")
+                .unlockedBy("has_jukebox", has(Blocks.JUKEBOX))
                 .unlockedBy("has_blank_music_disc", has(EtchedItems.BLANK_MUSIC_DISC))
                 .unlockedBy("has_music_label", has(EtchedItems.MUSIC_LABEL))
                 .save(recipeOutput);
@@ -99,6 +101,8 @@ public class EtchedRecipeProvider extends RecipeProvider {
                 .pattern("INI")
                 .pattern("PPP")
                 .unlockedBy("has_note_block", has(Blocks.NOTE_BLOCK))
+                .unlockedBy("has_jukebox", has(Blocks.JUKEBOX))
+                .unlockedBy("has_music_disc", has(Tags.Items.MUSIC_DISCS))
                 .save(recipeOutput);
 
         SpecialRecipeBuilder.special(MusicLabelMergeRecipe::new).save(recipeOutput, Etched.etchedPath("merge_music_label"));

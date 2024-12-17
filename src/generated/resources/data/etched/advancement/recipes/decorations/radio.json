@@ -1,6 +1,26 @@
 {
   "parent": "minecraft:recipes/root",
   "criteria": {
+    "has_jukebox": {
+      "conditions": {
+        "items": [
+          {
+            "items": "minecraft:jukebox"
+          }
+        ]
+      },
+      "trigger": "minecraft:inventory_changed"
+    },
+    "has_music_disc": {
+      "conditions": {
+        "items": [
+          {
+            "items": "#c:music_discs"
+          }
+        ]
+      },
+      "trigger": "minecraft:inventory_changed"
+    },
     "has_note_block": {
       "conditions": {
         "items": [
@@ -21,7 +41,9 @@
   "requirements": [
     [
       "has_the_recipe",
-      "has_note_block"
+      "has_note_block",
+      "has_jukebox",
+      "has_music_disc"
     ]
   ],
   "rewards": {

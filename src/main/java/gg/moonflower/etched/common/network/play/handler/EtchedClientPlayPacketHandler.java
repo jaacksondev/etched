@@ -64,11 +64,11 @@ public class EtchedClientPlayPacketHandler {
         int entityId = pkt.getEntityId();
         SoundInstance soundInstance = SoundTracker.getEntitySound(entityId);
         if (soundInstance != null) {
-            if (soundInstance instanceof StopListeningSound) {
-                ((StopListeningSound) soundInstance).stopListening();
-            }
             if (pkt.getAction() == ClientboundPlayEntityMusicPacket.Action.RESTART && client.getSoundManager().isActive(soundInstance)) {
                 return;
+            }
+            if (soundInstance instanceof StopListeningSound) {
+                ((StopListeningSound) soundInstance).stopListening();
             }
             SoundTracker.setEntitySound(entityId, null);
         }

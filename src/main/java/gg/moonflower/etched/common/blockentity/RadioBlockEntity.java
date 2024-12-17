@@ -3,7 +3,6 @@ package gg.moonflower.etched.common.blockentity;
 import gg.moonflower.etched.api.sound.SoundTracker;
 import gg.moonflower.etched.common.block.RadioBlock;
 import gg.moonflower.etched.core.registry.EtchedBlocks;
-import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;

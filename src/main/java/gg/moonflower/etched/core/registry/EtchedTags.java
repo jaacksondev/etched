@@ -7,6 +7,5 @@ import net.minecraft.world.level.block.Block;
 
 public class EtchedTags {
 
-    public static final TagKey<Block> AUDIO_PROVIDER = BlockTags.create(Etched.etchedPath("audio_providers"));
-    public static final TagKey<Block> MUSIC_DISCS = BlockTags.create(Etched.etchedPath("music_discs"));
+    public static final TagKey<Block> RECORD_PLAYERS = BlockTags.create(Etched.etchedPath("record_players"));
 }

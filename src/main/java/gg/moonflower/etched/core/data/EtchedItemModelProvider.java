@@ -91,13 +91,29 @@ public class EtchedItemModelProvider extends ItemModelProvider {
             }
         }
 
-        ItemModelBuilder boomboxInventory = new ItemModelBuilder(Etched.etchedPath("boombox_gui"), this.existingFileHelper).parent(new ModelFile.UncheckedModelFile(Etched.etchedPath("item/boombox_gui")));
-        this.basicItem(EtchedItems.BOOMBOX)
+        ItemModelBuilder boomboxInventory = new ItemModelBuilder(Etched.etchedPath("boombox_gui"), this.existingFileHelper)
+                .parent(new ModelFile.ExistingModelFile(Etched.etchedPath("item/boombox_gui"), this.existingFileHelper));
+        ItemModelBuilder boomboxPlaying = this.getBuilder("item/boombox_playing")
+                .parent(new ModelFile.ExistingModelFile(Etched.etchedPath("item/boombox_in_hand_playing"), this.existingFileHelper))
                 .customLoader(SeparateTransformsModelBuilder::begin)
-                .base(new ItemModelBuilder(Etched.etchedPath("boombox_in_hand"), this.existingFileHelper).parent(new ModelFile.UncheckedModelFile(Etched.etchedPath("item/boombox_in_hand"))))
+                .base(new ItemModelBuilder(Etched.etchedPath("boombox_in_hand_playing"), this.existingFileHelper)
+                        .parent(new ModelFile.ExistingModelFile(Etched.etchedPath("item/boombox_in_hand_playing"), this.existingFileHelper)))
                 .perspective(ItemDisplayContext.GUI, boomboxInventory)
                 .perspective(ItemDisplayContext.GROUND, boomboxInventory)
-                .perspective(ItemDisplayContext.FIXED, boomboxInventory);
+                .perspective(ItemDisplayContext.FIXED, boomboxInventory)
+                .end();
+        this.getBuilder(EtchedItems.BOOMBOX)
+                .parent(new ModelFile.ExistingModelFile(Etched.etchedPath("item/boombox_in_hand"), this.existingFileHelper))
+                .customLoader(SeparateTransformsModelBuilder::begin)
+                .base(new ItemModelBuilder(Etched.etchedPath("boombox_in_hand"), this.existingFileHelper)
+                        .parent(new ModelFile.ExistingModelFile(Etched.etchedPath("item/boombox_in_hand"), this.existingFileHelper)))
+                .perspective(ItemDisplayContext.GUI, boomboxInventory)
+                .perspective(ItemDisplayContext.GROUND, boomboxInventory)
+                .perspective(ItemDisplayContext.FIXED, boomboxInventory)
+                .end()
+                .override()
+                .model(boomboxPlaying)
+                .predicate(Etched.etchedPath("playing"), 1.0F);
 
         this.simpleBlockItem(EtchedBlocks.ETCHING_TABLE.get());
         this.simpleBlockItem(EtchedBlocks.ALBUM_JUKEBOX.get());

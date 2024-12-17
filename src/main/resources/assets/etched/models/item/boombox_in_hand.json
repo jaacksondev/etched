@@ -75,10 +75,10 @@
   },
   "overrides": [
     {
+      "model": "etched:item/boombox_playing",
       "predicate": {
-        "etched:playing": 1
-      },
-      "model": "etched:item/boombox_playing"
+        "etched:playing": 1.0
+      }
     }
   ]
 }

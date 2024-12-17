@@ -1,17 +1,9 @@
 {
-  "parent": "etched:item/boombox_in_hand",
+  "parent": "etched:item/boombox_in_hand_playing",
   "base": {
-    "parent": "etched:item/boombox_in_hand"
+    "parent": "etched:item/boombox_in_hand_playing"
   },
   "loader": "neoforge:separate_transforms",
-  "overrides": [
-    {
-      "model": "etched:item/boombox_playing",
-      "predicate": {
-        "etched:playing": 1.0
-      }
-    }
-  ],
   "perspectives": {
     "fixed": {
       "parent": "etched:item/boombox_gui"

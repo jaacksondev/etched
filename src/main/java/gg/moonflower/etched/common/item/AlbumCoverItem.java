@@ -1,6 +1,5 @@
 package gg.moonflower.etched.common.item;
 
-import gg.moonflower.etched.api.record.PlayableRecordItem;
 import gg.moonflower.etched.common.component.AlbumCoverComponent;
 import gg.moonflower.etched.common.menu.AlbumCoverMenu;
 import gg.moonflower.etched.core.Etched;
@@ -18,13 +17,14 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.inventory.ClickAction;
 import net.minecraft.world.inventory.Slot;
+import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.ItemUtils;
 import net.minecraft.world.level.Level;
 
 import java.util.List;
 
-public class AlbumCoverItem extends PlayableRecordItem implements ContainerItem {
+public class AlbumCoverItem extends Item implements ContainerItem {
 
     public AlbumCoverItem(Properties properties) {
         super(properties);
@@ -72,19 +72,21 @@ public class AlbumCoverItem extends PlayableRecordItem implements ContainerItem 
                 ItemStack remaining = slot.safeInsert(removed);
                 if (!remaining.isEmpty()) {
                     albumCover.insert(remaining);
+                    return true;
                 }
             }
         } else {
             int count = slot.getItem().getCount();
-            ItemStack remaining = albumCover.insert(slot.safeTake(count, count, player));
+            ItemStack remaining = albumCover.insert(slot.getItem());
             if (count != remaining.getCount()) {
                 this.playInsertSound(player);
                 stack.set(EtchedComponents.ALBUM_COVER, albumCover.build());
+                slot.safeTake(count, count - remaining.getCount(), player);
+                return true;
             }
-            slot.set(remaining);
         }
 
-        return true;
+        return false;
     }
 
     @Override
@@ -105,6 +107,7 @@ public class AlbumCoverItem extends PlayableRecordItem implements ContainerItem 
             if (!removed.isEmpty()) {
                 this.playRemoveOneSound(player);
                 access.set(removed);
+                return true;
             }
         } else {
             ItemStack remaining = albumCover.insert(clickItem);
@@ -112,10 +115,11 @@ public class AlbumCoverItem extends PlayableRecordItem implements ContainerItem 
                 this.playInsertSound(player);
                 access.set(remaining);
                 stack.set(EtchedComponents.ALBUM_COVER, albumCover.build());
+                return true;
             }
         }
 
-        return true;
+        return false;
     }
 
     @Override

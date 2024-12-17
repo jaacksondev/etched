@@ -2,7 +2,6 @@ package gg.moonflower.etched.common.entity;
 
 import gg.moonflower.etched.api.record.PlayableRecord;
 import gg.moonflower.etched.api.sound.SoundTracker;
-import gg.moonflower.etched.core.Etched;
 import gg.moonflower.etched.core.registry.EtchedEntities;
 import gg.moonflower.etched.core.registry.EtchedItems;
 import net.minecraft.client.Minecraft;
@@ -91,10 +90,10 @@ public class MinecartJukebox extends AbstractMinecart implements WorldlyContaine
         if (this.entityData.get(DATA_ID_HAS_RECORD)) {
             if (!this.level().isClientSide()) {
                 if (!this.record.isEmpty()) {
-                    this.clearContent();
-                    ItemEntity itemEntity = new ItemEntity(this.level(), this.getX(), this.getY() + 0.8, this.getZ(), this.record.copy());
+                    ItemEntity itemEntity = new ItemEntity(this.level(), this.getX(), this.getY() + this.getBbHeight() + 0.2, this.getZ(), this.record.copy());
                     itemEntity.setDefaultPickUpDelay();
                     this.level().addFreshEntity(itemEntity);
+                    this.clearContent();
                 }
             }
             return InteractionResult.sidedSuccess(this.level().isClientSide());
@@ -153,6 +152,11 @@ public class MinecartJukebox extends AbstractMinecart implements WorldlyContaine
     @Override
     public BlockState getDefaultDisplayBlockState() {
         return Blocks.JUKEBOX.defaultBlockState().setValue(JukeboxBlock.HAS_RECORD, this.entityData.get(DATA_ID_HAS_RECORD));
+    }
+
+    @Override
+    public ItemStack getPickResult() {
+        return new ItemStack(this.getDropItem());
     }
 
     @Override

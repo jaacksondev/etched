@@ -6,7 +6,6 @@ import gg.moonflower.etched.common.block.AlbumJukeboxBlock;
 import gg.moonflower.etched.common.menu.AlbumJukeboxMenu;
 import gg.moonflower.etched.core.Etched;
 import gg.moonflower.etched.core.registry.EtchedBlocks;
-import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.HolderLookup;

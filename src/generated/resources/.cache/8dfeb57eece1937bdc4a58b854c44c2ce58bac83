@@ -1,9 +1,10 @@
-// 1.21.1	2024-12-16T19:42:54.6963999	Item Models: etched
+// 1.21.1	2024-12-16T22:00:54.3512592	Item Models: etched
 2c8c32d785bfc59bf23083eff8838054ee580570 assets/etched/models/item/album_cover.json
 58ea3e91640b9c0acdf20b55b74129a70a9356a8 assets/etched/models/item/album_jukebox.json
 73b3ff9aa99d2b88ebceeb262d55d5ef54174b6b assets/etched/models/item/blank_music_disc.json
-c8ddbcd3b8c1d2d5c25cbbae0bfd6b99c2176690 assets/etched/models/item/boombox.json
+2438c245066b30bea9855fb20c792f907907b63c assets/etched/models/item/boombox.json
 253a188d25efb3cc638365c38e55426fd341cc1a assets/etched/models/item/boombox_gui.json
+47d95a4090834c077bc5f062b0f0a6bf82ae81c2 assets/etched/models/item/boombox_playing.json
 66af5593bc0bb0856a79464bdf064fc779ab1efd assets/etched/models/item/etched_album_cover/blank.json
 2fd3ad80dd9553d8914897db154a9709b8a75a06 assets/etched/models/item/etched_album_cover/default.json
 7613c0642522e2cb58f90ae268e5975d6cdd52e1 assets/etched/models/item/etched_music_disc.json

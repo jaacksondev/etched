@@ -47,11 +47,6 @@ public class ClientboundPlayEntityMusicPacket implements CustomPacketPayload {
         buf.writeVarInt(this.entityId);
     }
 
-//    @Override
-//    public void processPacket(NetworkEvent.Context ctx) {
-//        EtchedClientPlayPacketHandler.handlePlayEntityMusicPacket(this, ctx);
-//    }
-
     /**
      * @return The action to be performed on the client
      */

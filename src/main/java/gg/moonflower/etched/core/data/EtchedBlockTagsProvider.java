@@ -22,7 +22,7 @@ public class EtchedBlockTagsProvider extends BlockTagsProvider {
 
     @Override
     protected void addTags(HolderLookup.Provider provider) {
-        this.tag(EtchedTags.AUDIO_PROVIDER).add(EtchedBlocks.ALBUM_JUKEBOX.get(), EtchedBlocks.RADIO.get(), Blocks.JUKEBOX);
+        this.tag(EtchedTags.RECORD_PLAYERS).add(EtchedBlocks.ALBUM_JUKEBOX.get(), EtchedBlocks.RADIO.get(), Blocks.JUKEBOX);
         this.tag(BlockTags.MINEABLE_WITH_AXE).add(EtchedBlocks.ETCHING_TABLE.get(), EtchedBlocks.ALBUM_JUKEBOX.get(), EtchedBlocks.RADIO.get());
         this.tag(Tags.Blocks.VILLAGER_JOB_SITES).add(Blocks.NOTE_BLOCK);
     }

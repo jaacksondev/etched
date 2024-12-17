@@ -26,7 +26,7 @@ public class BoomboxContainer implements Container {
     }
 
     private void update() {
-        BoomboxItem.setRecord(this.boombox, this.keys.get(0));
+        BoomboxItem.setRecord(this.boombox, this.keys.getFirst());
     }
 
     @Override

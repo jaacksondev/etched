@@ -16,6 +16,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.client.resources.sounds.SoundInstance;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.core.Holder;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.core.component.DataComponents;
@@ -215,7 +216,7 @@ public final class PlayableRecord {
         if (optional.isPresent()) {
             if (track == 0) {
                 JukeboxSong song = optional.get().value();
-                if (PlayableRecord.canShowMessage(entity.getX(), entity.getY(), entity.getZ())) {
+                if (entity.level().getBlockState(entity.blockPosition().above()).isAir() && PlayableRecord.canShowMessage(entity.getX(), entity.getY(), entity.getZ())) {
                     Minecraft.getInstance().gui.setNowPlaying(song.description());
                 }
                 return Optional.of(new EntityRecordSoundInstance(song.soundEvent().value(), entity));
@@ -273,6 +274,10 @@ public final class PlayableRecord {
      */
     @OnlyIn(Dist.CLIENT)
     public static Optional<SoundInstance> createBlockSound(ItemStack stack, CommonLevelAccessor level, BlockPos pos, int track, int attenuationDistance) {
+        if (track < 0) {
+            return Optional.empty();
+        }
+
         Optional<Holder<JukeboxSong>> optional = JukeboxSong.fromStack(level.registryAccess(), stack);
         if (optional.isPresent()) {
             if (track == 0) {
