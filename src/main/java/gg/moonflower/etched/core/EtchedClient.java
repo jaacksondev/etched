@@ -53,7 +53,7 @@ public class EtchedClient {
             ItemProperties.register(EtchedItems.ETCHED_MUSIC_DISC.get(), Etched.etchedPath("pattern"), (stack, level, entity, i) -> {
                 DiscAppearanceComponent discAppearance = stack.get(EtchedComponents.DISC_APPEARANCE);
                 if (discAppearance != null) {
-                    return discAppearance.pattern().ordinal() / 10.0F;
+                    return discAppearance.pattern().ordinal();
                 }
                 return 0.0F;
             });
@@ -139,7 +139,7 @@ public class EtchedClient {
                 if (index == 1) {
                     return discAppearance.labelPrimaryColor();
                 }
-                if (!discAppearance.pattern().isSimple() && index == 2) {
+                if (discAppearance.pattern().isComplex() && index == 2) {
                     return discAppearance.labelSecondaryColor();
                 }
             }

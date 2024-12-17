@@ -1,6 +1,7 @@
 package gg.moonflower.etched.client.screen;
 
 import com.mojang.blaze3d.systems.RenderSystem;
+import com.mojang.datafixers.util.Pair;
 import gg.moonflower.etched.api.record.PlayableRecord;
 import gg.moonflower.etched.api.record.TrackData;
 import gg.moonflower.etched.common.component.DiscAppearanceComponent;
@@ -25,7 +26,6 @@ import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.inventory.ContainerListener;
 import net.minecraft.world.item.ItemStack;
 import net.neoforged.neoforge.network.PacketDistributor;
-import org.apache.commons.lang3.tuple.Pair;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -187,13 +187,13 @@ public class EtchingScreen extends AbstractContainerScreen<EtchingMenu> implemen
         }
 
         Pair<ResourceLocation, ResourceLocation> textures = pattern.getTextures();
-        guiGraphics.blit(textures.getLeft(), x, y, 14, 14, 1, 1, 14, 14, 16, 16);
-        if (!pattern.isSimple()) {
+        guiGraphics.blit(textures.getFirst(), x, y, 14, 14, 1, 1, 14, 14, 16, 16);
+        if (pattern.isComplex()) {
             if (pattern.isColorable()) {
                 guiGraphics.setColor((float) (secondaryLabelColor >> 16 & 255) / 255.0F, (float) (secondaryLabelColor >> 8 & 255) / 255.0F, (float) (secondaryLabelColor & 255) / 255.0F, 1.0F);
             }
 
-            guiGraphics.blit(textures.getRight(), x, y, 14, 14, 1, 1, 14, 14, 16, 16);
+            guiGraphics.blit(textures.getSecond(), x, y, 14, 14, 1, 1, 14, 14, 16, 16);
         }
         guiGraphics.setColor(1F, 1F, 1F, 1F);
     }

@@ -340,7 +340,7 @@ public class EtchingMenu extends AbstractContainerMenu implements UrlMenu {
                         }
                     }
 
-                    DyedItemColor discStackColor = resultStack.get(DataComponents.DYED_COLOR);
+                    DyedItemColor discStackColor = discStack.get(DataComponents.DYED_COLOR);
                     if (discStackColor != null) {
                         discColor = discStackColor.rgb();
                     }

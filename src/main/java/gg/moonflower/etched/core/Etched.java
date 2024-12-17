@@ -5,10 +5,7 @@ import gg.moonflower.etched.api.sound.download.SoundSourceManager;
 import gg.moonflower.etched.common.component.MusicLabelComponent;
 import gg.moonflower.etched.common.sound.download.BandcampSource;
 import gg.moonflower.etched.common.sound.download.SoundCloudSource;
-import gg.moonflower.etched.core.data.EtchedBlockTagsProvider;
-import gg.moonflower.etched.core.data.EtchedEntityTypeTagsProvider;
-import gg.moonflower.etched.core.data.EtchedItemTagsProvider;
-import gg.moonflower.etched.core.data.EtchedRecipeProvider;
+import gg.moonflower.etched.core.data.*;
 import gg.moonflower.etched.core.registry.*;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.core.cauldron.CauldronInteraction;
@@ -115,5 +112,6 @@ public class Etched {
         gen.addProvider(event.includeServer(), new EtchedItemTagsProvider(packOutput, lookupProvider, blockTags.contentsGetter(), existingFileHelper));
         gen.addProvider(event.includeServer(), new EtchedEntityTypeTagsProvider(packOutput, lookupProvider, existingFileHelper));
         gen.addProvider(event.includeServer(), new EtchedRecipeProvider(packOutput, lookupProvider));
+        gen.addProvider(event.includeClient(), new EtchedItemModelProvider(packOutput, existingFileHelper));
     }
 }

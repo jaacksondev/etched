@@ -1,7 +1,11 @@
 {
-	"render_type": "minecraft:cutout",
-	"parent": "etched:block/radio",
 	"credit": "Made by Farcr",
+	"parent": "etched:block/radio",
+	"render_type": "minecraft:cutout",
+	"textures": {
+		"texture": "etched:block/radio",
+		"particle": "etched:block/radio_particle"
+	},
 	"elements": [
 		{
 			"from": [2, 0, 5],
@@ -13,7 +17,7 @@
 				"south": {"uv": [6.5, 3.5, 12.5, 7.5], "texture": "#texture"},
 				"west": {"uv": [3.5, 8, 6.5, 12], "texture": "#texture"},
 				"up": {"uv": [0, 0, 6, 3], "texture": "#texture"},
-				"down": {"uv": [6.5, 0, 12.5, 3], "texture": "#texture"}
+				"down": {"uv": [6.5, 0, 12.5, 3], "texture": "#texture", "cullface": "down"}
 			}
 		},
 		{

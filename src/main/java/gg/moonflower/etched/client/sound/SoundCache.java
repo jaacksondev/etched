@@ -10,11 +10,9 @@ import gg.moonflower.etched.api.util.DownloadProgressListener;
 import gg.moonflower.etched.core.Etched;
 import net.minecraft.Util;
 import net.minecraft.client.Minecraft;
-import net.neoforged.api.distmarker.Dist;
-import net.neoforged.bus.api.SubscribeEvent;
-import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.client.event.ClientPlayerNetworkEvent;
 import net.neoforged.neoforge.client.event.ClientTickEvent;
+import net.neoforged.neoforge.common.NeoForge;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.logging.log4j.LogManager;
@@ -40,7 +38,6 @@ import java.util.concurrent.locks.ReentrantLock;
  * @author Ocelot
  * @see AudioSource#downloadTo(URL, boolean, DownloadProgressListener, AudioSource.AudioFileType)
  */
-@EventBusSubscriber(value = Dist.CLIENT, modid = Etched.MOD_ID)
 @ApiStatus.Internal
 public final class SoundCache {
 
@@ -93,6 +90,8 @@ public final class SoundCache {
                 LOGGER.error("Failed to load cache metadata", e);
             }
         }
+        NeoForge.EVENT_BUS.addListener(SoundCache::onClientDisconnect);
+        NeoForge.EVENT_BUS.addListener(SoundCache::onClientTickPost);
     }
 
     private SoundCache() {
@@ -117,13 +116,11 @@ public final class SoundCache {
         }
     }
 
-    @SubscribeEvent
-    public static void onClientDisconnect(ClientPlayerNetworkEvent.LoggingOut event) {
+    private static void onClientDisconnect(ClientPlayerNetworkEvent.LoggingOut event) {
         SOURCE_CACHE.invalidateAll();
     }
 
-    @SubscribeEvent
-    public static void onClientTickPost(ClientTickEvent.Post event) {
+    private static void onClientTickPost(ClientTickEvent.Post event) {
         if (nextWriteTime == Long.MAX_VALUE) {
             return;
         }

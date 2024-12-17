@@ -1,0 +1,21 @@
+{
+  "parent": "minecraft:item/generated",
+  "base": {
+    "parent": "etched:item/boombox_in_hand"
+  },
+  "loader": "neoforge:separate_transforms",
+  "perspectives": {
+    "fixed": {
+      "parent": "etched:item/boombox_gui"
+    },
+    "ground": {
+      "parent": "etched:item/boombox_gui"
+    },
+    "gui": {
+      "parent": "etched:item/boombox_gui"
+    }
+  },
+  "textures": {
+    "layer0": "etched:item/boombox"
+  }
+}

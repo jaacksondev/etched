@@ -11,10 +11,8 @@ import gg.moonflower.etched.client.render.item.AlbumImageProcessor;
 import gg.moonflower.etched.core.Etched;
 import net.minecraft.Util;
 import net.minecraft.client.Minecraft;
-import net.neoforged.api.distmarker.Dist;
-import net.neoforged.bus.api.SubscribeEvent;
-import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.client.event.ClientTickEvent;
+import net.neoforged.neoforge.common.NeoForge;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.logging.log4j.LogManager;
@@ -32,7 +30,6 @@ import java.nio.IntBuffer;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
@@ -44,13 +41,12 @@ import static org.lwjgl.stb.STBImage.stbi_load_from_memory;
 /**
  * @author Ocelot
  */
-@EventBusSubscriber(value = Dist.CLIENT, modid = Etched.MOD_ID)
 @ApiStatus.Internal
 public final class AlbumCoverCache {
 
     private static final Logger LOGGER = LogManager.getLogger();
     private static final Gson GSON = new Gson();
-    private static final Path CACHE_FOLDER = Paths.get(Minecraft.getInstance().gameDirectory.toURI()).resolve(Etched.MOD_ID + "-cache");
+    private static final Path CACHE_FOLDER = Minecraft.getInstance().gameDirectory.toPath().resolve(Etched.MOD_ID + "-cache");
     private static final Object METADATA_LOCK = new Object();
     private static final Object IO_LOCK = new Object();
 
@@ -68,13 +64,13 @@ public final class AlbumCoverCache {
                 LOGGER.error("Failed to load cache metadata", e);
             }
         }
+        NeoForge.EVENT_BUS.addListener(AlbumCoverCache::onClientTickPost);
     }
 
     private AlbumCoverCache() {
     }
 
-    @SubscribeEvent
-    public static void onClientTickPost(ClientTickEvent.Post event) {
+    private static void onClientTickPost(ClientTickEvent.Post event) {
         if (nextWriteTime == Long.MAX_VALUE) {
             return;
         }

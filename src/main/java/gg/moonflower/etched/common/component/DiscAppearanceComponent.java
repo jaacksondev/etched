@@ -1,5 +1,6 @@
 package gg.moonflower.etched.common.component;
 
+import com.mojang.datafixers.util.Pair;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.DataResult;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
@@ -7,7 +8,6 @@ import gg.moonflower.etched.core.Etched;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.resources.ResourceLocation;
-import org.apache.commons.lang3.tuple.Pair;
 
 import java.util.Locale;
 
@@ -27,7 +27,7 @@ public record DiscAppearanceComponent(LabelPattern pattern, int discColor, int l
         buffer.writeInt(value.discColor);
         if (value.pattern.isColorable()) {
             buffer.writeInt(value.labelPrimaryColor);
-            if (!value.pattern.isSimple()) {
+            if (value.pattern.isComplex()) {
                 buffer.writeInt(value.labelSecondaryColor);
             }
         }
@@ -39,7 +39,7 @@ public record DiscAppearanceComponent(LabelPattern pattern, int discColor, int l
 
         if (pattern.isColorable()) {
             labelPrimaryColor = buffer.readInt();
-            if (!pattern.isSimple()) {
+            if (pattern.isComplex()) {
                 labelSecondaryColor = buffer.readInt();
             }
         }
@@ -112,8 +112,8 @@ public record DiscAppearanceComponent(LabelPattern pattern, int discColor, int l
         /**
          * @return Whether the label pattern supports two colors.
          */
-        public boolean isSimple() {
-            return this.simple;
+        public boolean isComplex() {
+            return !this.simple;
         }
 
         /**

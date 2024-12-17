@@ -98,7 +98,7 @@ public class MusicLabelDyeRecipe extends CustomRecipe {
 
         MusicLabelComponent label = stack.get(EtchedComponents.MUSIC_LABEL);
         if (label != null) {
-            if (label.primaryColor() != 0xFFFFFF) {
+            if (label.primaryColor() != -1) {
                 int color = label.primaryColor();
                 int r = FastColor.ARGB32.red(color);
                 int g = FastColor.ARGB32.green(color);
