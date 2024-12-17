@@ -11,9 +11,9 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-public record EtchedMusicComponent(List<TrackData> tracks) {
+public record MusicTrackComponent(List<TrackData> tracks) {
 
-    public static final Codec<EtchedMusicComponent> CODEC = TrackData.CODEC
+    public static final Codec<MusicTrackComponent> CODEC = TrackData.CODEC
             .orElse(TrackData.EMPTY)
             .listOf()
             .flatXmap(tracks -> {
@@ -23,17 +23,13 @@ public record EtchedMusicComponent(List<TrackData> tracks) {
                         validTracks.add(track);
                     }
                 }
-                return !validTracks.isEmpty() ? DataResult.success(new EtchedMusicComponent(validTracks)) : DataResult.error(() -> "At least 1 valid track is required");
+                return !validTracks.isEmpty() ? DataResult.success(new MusicTrackComponent(validTracks)) : DataResult.error(() -> "At least 1 valid track is required");
             }, component -> !component.tracks.isEmpty() ? DataResult.success(component.tracks) : DataResult.error(() -> "At least 1 valid track is required"));
-    public static final StreamCodec<RegistryFriendlyByteBuf, EtchedMusicComponent> STREAM_CODEC = TrackData.STREAM_CODEC
+    public static final StreamCodec<RegistryFriendlyByteBuf, MusicTrackComponent> STREAM_CODEC = TrackData.STREAM_CODEC
             .apply(ByteBufCodecs.list())
-            .map(EtchedMusicComponent::new, EtchedMusicComponent::tracks);
+            .map(MusicTrackComponent::new, MusicTrackComponent::tracks);
 
-    public EtchedMusicComponent(List<TrackData> tracks) {
+    public MusicTrackComponent(List<TrackData> tracks) {
         this.tracks = Collections.unmodifiableList(tracks);
-    }
-
-    public EtchedMusicComponent() {
-        this(Collections.emptyList());
     }
 }

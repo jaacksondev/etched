@@ -33,14 +33,10 @@ public class RadioBlockEntity extends BlockEntity implements Clearable {
         super(EtchedBlocks.RADIO_BE.get(), pos, state);
     }
 
-    public static void tick(Level level, BlockPos pos, BlockState state, RadioBlockEntity blockEntity) {
-        if (level == null || !level.isClientSide()) {
-            return;
-        }
-
+    public static void tickClient(Level level, BlockPos pos, BlockState state, RadioBlockEntity blockEntity) {
         if (!blockEntity.loaded) {
             blockEntity.loaded = true;
-            SoundTracker.playRadio(blockEntity.url, state, (ClientLevel) level, pos);
+            SoundTracker.playRadio(blockEntity.url, state, level, pos);
         }
 
         if (blockEntity.isPlaying()) {
@@ -55,7 +51,7 @@ public class RadioBlockEntity extends BlockEntity implements Clearable {
         super.loadAdditional(tag, registries);
         this.url = tag.contains("Url", Tag.TAG_STRING) ? tag.getString("Url") : null;
         if (this.loaded) {
-            SoundTracker.playRadio(this.url, this.getBlockState(), (ClientLevel) this.level, this.getBlockPos());
+            SoundTracker.playRadio(this.url, this.getBlockState(), this.level, this.getBlockPos());
         }
     }
 
@@ -82,7 +78,7 @@ public class RadioBlockEntity extends BlockEntity implements Clearable {
     public void clearContent() {
         this.url = null;
         if (this.level != null && this.level.isClientSide()) {
-            SoundTracker.playRadio(this.url, this.getBlockState(), (ClientLevel) this.level, this.getBlockPos());
+            SoundTracker.playRadio(this.url, this.getBlockState(), this.level, this.getBlockPos());
         }
     }
 

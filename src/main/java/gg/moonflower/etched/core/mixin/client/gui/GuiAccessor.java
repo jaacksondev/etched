@@ -1,4 +1,4 @@
-package gg.moonflower.etched.core.mixin.client;
+package gg.moonflower.etched.core.mixin.client.gui;
 
 import net.minecraft.client.gui.Gui;
 import net.minecraft.network.chat.Component;

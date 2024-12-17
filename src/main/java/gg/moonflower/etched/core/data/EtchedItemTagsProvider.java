@@ -1,9 +1,7 @@
 package gg.moonflower.etched.core.data;
 
 import gg.moonflower.etched.core.Etched;
-import gg.moonflower.etched.core.registry.EtchedBlocks;
 import gg.moonflower.etched.core.registry.EtchedItems;
-import gg.moonflower.etched.core.registry.EtchedTags;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.data.PackOutput;
 import net.minecraft.data.tags.ItemTagsProvider;
@@ -12,7 +10,6 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.tags.ItemTags;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.block.Block;
-import net.minecraft.world.level.block.Blocks;
 import net.neoforged.neoforge.common.Tags;
 import net.neoforged.neoforge.common.data.ExistingFileHelper;
 import org.jetbrains.annotations.Nullable;
@@ -27,6 +24,7 @@ public class EtchedItemTagsProvider extends ItemTagsProvider {
 
     @Override
     protected void addTags(HolderLookup.Provider provider) {
+        this.tag(ItemTags.DYEABLE).add(EtchedItems.BLANK_MUSIC_DISC.get());
         this.tag(Tags.Items.MUSIC_DISCS).add(EtchedItems.ETCHED_MUSIC_DISC.get());
         this.tag(ItemTags.create(ResourceLocation.fromNamespaceAndPath("c", "paper"))).add(Items.PAPER);
     }

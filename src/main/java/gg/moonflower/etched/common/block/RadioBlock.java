@@ -4,7 +4,7 @@ import com.mojang.serialization.MapCodec;
 import gg.moonflower.etched.common.blockentity.RadioBlockEntity;
 import gg.moonflower.etched.common.menu.RadioMenu;
 import gg.moonflower.etched.core.Etched;
-import gg.moonflower.etched.core.mixin.client.LevelRendererAccessor;
+import gg.moonflower.etched.core.mixin.client.render.LevelRendererAccessor;
 import gg.moonflower.etched.core.registry.EtchedBlocks;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.resources.sounds.SoundInstance;
@@ -70,14 +70,11 @@ public class RadioBlock extends BaseEntityBlock {
             level.setBlock(pos, state.setValue(PORTAL, true), 3);
             return ItemInteractionResult.sidedSuccess(level.isClientSide());
         }
-        // FIXME
         if (!level.isClientSide()) {
             MenuProvider menuProvider = state.getMenuProvider(level, pos);
             if (menuProvider != null) {
                 String url = level.getBlockEntity(pos) instanceof RadioBlockEntity be ? be.getUrl() : "";
-                player.openMenu(menuProvider, buf -> {
-                    buf.writeUtf(url);
-                });
+                player.openMenu(menuProvider, buf -> buf.writeUtf(url));
             }
         }
         return ItemInteractionResult.sidedSuccess(level.isClientSide());
@@ -91,11 +88,10 @@ public class RadioBlock extends BaseEntityBlock {
     }
 
     @Override
-    public void neighborChanged(BlockState blockState, Level level, BlockPos pos, Block block, BlockPos blockPos2, boolean bl) {
+    public void neighborChanged(BlockState state, Level level, BlockPos pos, Block block, BlockPos blockPos2, boolean bl) {
         if (!level.isClientSide()) {
-            boolean bl2 = blockState.getValue(POWERED);
-            if (bl2 != level.hasNeighborSignal(pos)) {
-                level.setBlock(pos, blockState.cycle(POWERED), 2);
+            if (state.getValue(POWERED) != level.hasNeighborSignal(pos)) {
+                level.setBlock(pos, state.cycle(POWERED), 2);
             }
         }
     }
@@ -104,8 +100,8 @@ public class RadioBlock extends BaseEntityBlock {
     public void onRemove(BlockState state, Level level, BlockPos pos, BlockState newState, boolean moving) {
         if (!state.is(newState.getBlock())) {
             BlockEntity blockEntity = level.getBlockEntity(pos);
-            if (blockEntity instanceof RadioBlockEntity) {
-                if (((RadioBlockEntity) blockEntity).isPlaying()) {
+            if (blockEntity instanceof RadioBlockEntity radio) {
+                if (radio.isPlaying()) {
                     level.levelEvent(1011, pos, 0);
                 }
                 Clearable.tryClear(blockEntity);
@@ -195,6 +191,9 @@ public class RadioBlock extends BaseEntityBlock {
 
     @Override
     public <T extends BlockEntity> BlockEntityTicker<T> getTicker(Level level, BlockState blockState, BlockEntityType<T> blockEntityType) {
-        return createTickerHelper(blockEntityType, EtchedBlocks.RADIO_BE.get(), RadioBlockEntity::tick);
+        if (!level.isClientSide()) {
+            return null;
+        }
+        return createTickerHelper(blockEntityType, EtchedBlocks.RADIO_BE.get(), RadioBlockEntity::tickClient);
     }
 }

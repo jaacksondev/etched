@@ -71,7 +71,7 @@ public class MusicLabelDyeRecipe extends CustomRecipe {
                         return ItemStack.EMPTY;
                     }
 
-                    label = stack.copy();
+                    label = stack.copyWithCount(1);
                 } else {
                     if (!(stack.getItem() instanceof DyeItem dyeitem)) {
                         return ItemStack.EMPTY;
@@ -110,7 +110,7 @@ public class MusicLabelDyeRecipe extends CustomRecipe {
                 sum++;
             }
         } else {
-            label = MusicLabelComponent.EMPTY;
+            label = MusicLabelComponent.DEFAULT;
         }
 
         for (DyeColor dyeColor : dyes) {

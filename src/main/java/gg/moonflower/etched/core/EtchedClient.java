@@ -4,9 +4,9 @@ import gg.moonflower.etched.client.render.EtchedModelLayers;
 import gg.moonflower.etched.client.render.JukeboxMinecartRenderer;
 import gg.moonflower.etched.client.render.item.AlbumCoverItemRenderer;
 import gg.moonflower.etched.client.screen.*;
+import gg.moonflower.etched.common.component.DiscAppearanceComponent;
 import gg.moonflower.etched.common.component.MusicLabelComponent;
 import gg.moonflower.etched.common.item.BoomboxItem;
-import gg.moonflower.etched.common.item.EtchedMusicDiscItem;
 import gg.moonflower.etched.core.registry.*;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.model.MinecartModel;
@@ -50,7 +50,13 @@ public class EtchedClient {
                 InteractionHand hand = entity != null ? BoomboxItem.getPlayingHand(entity) : null;
                 return hand != null && stack == entity.getItemInHand(hand) ? 1 : 0;
             });
-            ItemProperties.register(EtchedItems.ETCHED_MUSIC_DISC.get(), Etched.etchedPath("pattern"), (stack, level, entity, i) -> EtchedMusicDiscItem.getPattern(stack).ordinal() / 10F);
+            ItemProperties.register(EtchedItems.ETCHED_MUSIC_DISC.get(), Etched.etchedPath("pattern"), (stack, level, entity, i) -> {
+                DiscAppearanceComponent discAppearance = stack.get(EtchedComponents.DISC_APPEARANCE);
+                if (discAppearance != null) {
+                    return discAppearance.pattern().ordinal() / 10.0F;
+                }
+                return 0.0F;
+            });
         });
     }
 
@@ -93,7 +99,7 @@ public class EtchedClient {
 
     private void registerCustomModels(ModelEvent.RegisterAdditional event) {
         ResourceManager resourceManager = Minecraft.getInstance().getResourceManager();
-        String folder = "models/item/" + AlbumCoverItemRenderer.FOLDER_NAME;
+        String folder = "models/" + AlbumCoverItemRenderer.FOLDER_NAME;
         event.register(new ModelResourceLocation(Etched.etchedPath("item/boombox_in_hand"), "standalone"));
         for (ResourceLocation location : resourceManager.listResources(folder, name -> name.getPath().endsWith(".json")).keySet()) {
             event.register(new ModelResourceLocation(ResourceLocation.fromNamespaceAndPath(location.getNamespace(), location.getPath().substring(7, location.getPath().length() - 5)), "standalone"));
@@ -113,27 +119,28 @@ public class EtchedClient {
     private void registerItemColors(RegisterColorHandlersEvent.Item event) {
         event.register((stack, index) -> index == 0 || index == 1 ? DyedItemColor.getOrDefault(stack, -1) : -1, EtchedItems.MUSIC_LABEL.get());
         event.register((stack, index) -> {
-            MusicLabelComponent label = stack.getOrDefault(EtchedComponents.MUSIC_LABEL, MusicLabelComponent.EMPTY);
+            MusicLabelComponent label = stack.getOrDefault(EtchedComponents.MUSIC_LABEL, MusicLabelComponent.DEFAULT);
             if (index == 0) {
-                return 0xFF000000 | label.primaryColor();
+                return label.primaryColor();
             }
             if (index == 1) {
-                return 0xFF000000 | label.secondaryColor();
+                return label.secondaryColor();
             }
             return -1;
         }, EtchedItems.MUSIC_LABEL.get());
 
-        event.register((stack, index) -> index > 0 ? -1 : DyedItemColor.getOrDefault(stack, -1), EtchedItems.BLANK_MUSIC_DISC.get());
+        event.register((stack, index) -> index > 0 ? -1 : 0xFF000000 | DyedItemColor.getOrDefault(stack, 0x515151), EtchedItems.BLANK_MUSIC_DISC.get());
         event.register((stack, index) -> {
+            DiscAppearanceComponent discAppearance = stack.getOrDefault(EtchedComponents.DISC_APPEARANCE, DiscAppearanceComponent.DEFAULT);
             if (index == 0) {
-                return 0xFF000000 | EtchedMusicDiscItem.getDiscColor(stack);
+                return discAppearance.discColor();
             }
-            if (EtchedMusicDiscItem.getPattern(stack).isColorable()) {
+            if (discAppearance.pattern().isColorable()) {
                 if (index == 1) {
-                    return 0xFF000000 | EtchedMusicDiscItem.getLabelPrimaryColor(stack);
+                    return discAppearance.labelPrimaryColor();
                 }
-                if (index == 2) {
-                    return 0xFF000000 | EtchedMusicDiscItem.getLabelSecondaryColor(stack);
+                if (!discAppearance.pattern().isSimple() && index == 2) {
+                    return discAppearance.labelSecondaryColor();
                 }
             }
             return -1;

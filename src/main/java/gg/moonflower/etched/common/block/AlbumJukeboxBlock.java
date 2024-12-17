@@ -2,8 +2,7 @@ package gg.moonflower.etched.common.block;
 
 import com.mojang.serialization.MapCodec;
 import gg.moonflower.etched.common.blockentity.AlbumJukeboxBlockEntity;
-import gg.moonflower.etched.core.Etched;
-import gg.moonflower.etched.core.mixin.client.LevelRendererAccessor;
+import gg.moonflower.etched.core.mixin.client.render.LevelRendererAccessor;
 import gg.moonflower.etched.core.registry.EtchedBlocks;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.resources.sounds.SoundInstance;
@@ -30,8 +29,6 @@ import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import net.minecraft.world.level.block.state.properties.BooleanProperty;
 import net.minecraft.world.level.block.state.properties.DirectionProperty;
 import net.minecraft.world.phys.BlockHitResult;
-import net.neoforged.api.distmarker.Dist;
-import net.neoforged.api.distmarker.OnlyIn;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Map;
@@ -63,9 +60,8 @@ public class AlbumJukeboxBlock extends BaseEntityBlock {
             return ItemInteractionResult.SUCCESS;
         }
 
-        BlockEntity blockEntity = level.getBlockEntity(pos);
-        if (blockEntity instanceof AlbumJukeboxBlockEntity) {
-            player.openMenu((AlbumJukeboxBlockEntity) blockEntity);
+        if (level.getBlockEntity(pos) instanceof AlbumJukeboxBlockEntity jukebox) {
+            player.openMenu(jukebox, buf -> buf.writeBlockPos(pos));
         }
         // TODO: stats
         return ItemInteractionResult.CONSUME;
@@ -91,8 +87,8 @@ public class AlbumJukeboxBlock extends BaseEntityBlock {
     public void onRemove(BlockState state, Level level, BlockPos pos, BlockState newState, boolean moving) {
         if (!state.is(newState.getBlock())) {
             BlockEntity blockEntity = level.getBlockEntity(pos);
-            if (blockEntity instanceof Container) {
-                Containers.dropContents(level, pos, (Container) blockEntity);
+            if (blockEntity instanceof Container container) {
+                Containers.dropContents(level, pos, container);
                 level.updateNeighbourForOutputSignal(pos, this);
             }
             level.levelEvent(1011, pos, 0);
@@ -161,6 +157,9 @@ public class AlbumJukeboxBlock extends BaseEntityBlock {
 
     @Override
     public <T extends BlockEntity> BlockEntityTicker<T> getTicker(Level level, BlockState blockState, BlockEntityType<T> blockEntityType) {
-        return createTickerHelper(blockEntityType, EtchedBlocks.ALBUM_JUKEBOX_BE.get(), AlbumJukeboxBlockEntity::tick);
+        if (!level.isClientSide()) {
+            return null;
+        }
+        return createTickerHelper(blockEntityType, EtchedBlocks.ALBUM_JUKEBOX_BE.get(), AlbumJukeboxBlockEntity::tickClient);
     }
 }

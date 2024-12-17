@@ -13,8 +13,12 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.net.Proxy;
+import java.net.URISyntaxException;
 import java.net.URL;
-import java.util.*;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Optional;
 
 /**
  * A source for audio to download from besides a direct URL.
@@ -47,9 +51,10 @@ public interface SoundDownloadSource {
      * @param proxy            The internet proxy
      * @return The URL to the audio file
      * @throws IOException        If any error occurs with requests
+     * @throws URISyntaxException If any urls are malformed
      * @throws JsonParseException If any error occurs when parsing
      */
-    Collection<URL> resolveUrl(String url, @Nullable DownloadProgressListener progressListener, Proxy proxy) throws IOException;
+    Collection<URL> resolveUrl(String url, @Nullable DownloadProgressListener progressListener, Proxy proxy) throws IOException, URISyntaxException, JsonParseException;
 
     /**
      * Resolves the artist and title for the specified track. If the more than one tracks are returned, the first data will be treated as the album data.
@@ -59,9 +64,10 @@ public interface SoundDownloadSource {
      * @param proxy            The internet proxy
      * @return The artist and title in a pair
      * @throws IOException        If any error occurs with requests
+     * @throws URISyntaxException If any urls are malformed
      * @throws JsonParseException If any error occurs when parsing
      */
-    Collection<TrackData> resolveTracks(String url, @Nullable DownloadProgressListener progressListener, Proxy proxy) throws IOException, JsonParseException;
+    Collection<TrackData> resolveTracks(String url, @Nullable DownloadProgressListener progressListener, Proxy proxy) throws IOException, URISyntaxException, JsonParseException;
 
     /**
      * Resolves the input stream to the cover for the specified album.
@@ -70,9 +76,10 @@ public interface SoundDownloadSource {
      * @param progressListener The listener for net status
      * @param proxy            The internet proxy
      * @return A stream to the track or <code>{@link Optional#empty()}</code> if there is no cover
-     * @throws IOException If any error occurs with requests
+     * @throws IOException        If any error occurs with requests
+     * @throws URISyntaxException If any urls are malformed
      */
-    Optional<String> resolveAlbumCover(String url, @Nullable DownloadProgressListener progressListener, Proxy proxy, ResourceManager resourceManager) throws IOException;
+    Optional<String> resolveAlbumCover(String url, @Nullable DownloadProgressListener progressListener, Proxy proxy, ResourceManager resourceManager) throws IOException, URISyntaxException, JsonParseException;
 
     /**
      * Checks to see if the specified URL is for this source.

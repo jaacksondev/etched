@@ -1,5 +1,7 @@
 package gg.moonflower.etched.client.sound;
 
+import com.google.common.cache.Cache;
+import com.google.common.cache.CacheBuilder;
 import com.google.gson.*;
 import com.google.gson.reflect.TypeToken;
 import gg.moonflower.etched.api.sound.download.SoundSourceManager;
@@ -8,8 +10,11 @@ import gg.moonflower.etched.api.util.DownloadProgressListener;
 import gg.moonflower.etched.core.Etched;
 import net.minecraft.Util;
 import net.minecraft.client.Minecraft;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.EventBusSubscriber;
+import net.neoforged.neoforge.client.event.ClientPlayerNetworkEvent;
 import net.neoforged.neoforge.client.event.ClientTickEvent;
-import net.neoforged.neoforge.common.NeoForge;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.logging.log4j.LogManager;
@@ -28,12 +33,14 @@ import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.ReentrantLock;
 
 /**
  * @author Ocelot
  * @see AudioSource#downloadTo(URL, boolean, DownloadProgressListener, AudioSource.AudioFileType)
  */
+@EventBusSubscriber(value = Dist.CLIENT, modid = Etched.MOD_ID)
 @ApiStatus.Internal
 public final class SoundCache {
 
@@ -51,7 +58,7 @@ public final class SoundCache {
     private static volatile Map<String, CacheMetadata> CACHE_METADATA = new HashMap<>();
     private static volatile long nextWriteTime = Long.MAX_VALUE;
 
-    private static final Map<String, CompletableFuture<AudioSource>> DOWNLOADING = new HashMap<>();
+    private static final Cache<String, CompletableFuture<AudioSource>> SOURCE_CACHE = CacheBuilder.newBuilder().expireAfterAccess(5, TimeUnit.MINUTES).build();
     private static Map<String, Path> files = new ConcurrentHashMap<>();
 
     static {
@@ -86,25 +93,6 @@ public final class SoundCache {
                 LOGGER.error("Failed to load cache metadata", e);
             }
         }
-        NeoForge.EVENT_BUS.<ClientTickEvent.Post>addListener(event -> {
-            if (nextWriteTime == Long.MAX_VALUE) {
-                return;
-            }
-
-            if (System.currentTimeMillis() - nextWriteTime > 0) {
-                nextWriteTime = Long.MAX_VALUE;
-                Util.ioPool().execute(SoundCache::writeMetadata);
-            }
-        });
-//        ClientTickEvent.CLIENT_POST.register(client -> {
-//            if (nextWriteTime == Long.MAX_VALUE)
-//                return;
-//
-//            if (System.currentTimeMillis() - nextWriteTime > 0) {
-//                nextWriteTime = Long.MAX_VALUE;
-//                Util.ioPool().execute(SoundCache::writeMetadata);
-//            }
-//        });
     }
 
     private SoundCache() {
@@ -129,6 +117,23 @@ public final class SoundCache {
         }
     }
 
+    @SubscribeEvent
+    public static void onClientDisconnect(ClientPlayerNetworkEvent.LoggingOut event) {
+        SOURCE_CACHE.invalidateAll();
+    }
+
+    @SubscribeEvent
+    public static void onClientTickPost(ClientTickEvent.Post event) {
+        if (nextWriteTime == Long.MAX_VALUE) {
+            return;
+        }
+
+        if (System.currentTimeMillis() - nextWriteTime > 0) {
+            nextWriteTime = Long.MAX_VALUE;
+            Util.ioPool().execute(SoundCache::writeMetadata);
+        }
+    }
+
     /**
      * Downloads an audio stream from the specified URL and stores it in a local cache.
      *
@@ -136,44 +141,32 @@ public final class SoundCache {
      * @return An input stream to the locally downloaded file
      */
     public static CompletableFuture<AudioSource> getAudioStream(String url, @Nullable DownloadProgressListener listener, AudioSource.AudioFileType type) {
-        if (DOWNLOADING.containsKey(url)) {
-            CompletableFuture<AudioSource> future = DOWNLOADING.get(url);
-            if (!future.isDone()) {
-                return future;
-            }
-        }
-
         try {
-            DOWNLOAD_LOCK.lock();
+            return SOURCE_CACHE.get(url, () -> {
+                try {
+                    DOWNLOAD_LOCK.lock();
 
-            CompletableFuture<AudioSource> future = SoundSourceManager.getAudioSource(url, listener, Minecraft.getInstance().getProxy(), type).handle((source, e) -> {
-                if (e != null) {
-                    if (listener != null) {
-                        listener.onFail();
-                    }
-                    throw new CompletionException(e);
+                    CompletableFuture<AudioSource> future = SoundSourceManager.getAudioSource(url, listener, Minecraft.getInstance().getProxy(), type).handle((source, e) -> {
+                        if (e != null) {
+                            if (listener != null) {
+                                listener.onFail();
+                            }
+                            throw new CompletionException(e);
+                        }
+                        return source;
+                    });
+
+                    SOURCE_CACHE.put(url, future);
+                    return future;
+                } finally {
+                    DOWNLOAD_LOCK.unlock();
                 }
-                return source;
-            }).handle((source, throwable) -> {
-                Minecraft.getInstance().execute(() -> DOWNLOADING.remove(url));
-                if (throwable != null) {
-                    if (throwable instanceof CompletionException e) {
-                        throw e;
-                    }
-                    throw new CompletionException(throwable);
-                }
-                return source;
             });
-
-            DOWNLOADING.put(url, future);
-            return future;
         } catch (Exception e) {
             if (listener != null) {
                 listener.onFail();
             }
             throw new CompletionException("Failed to load audio into cache", e);
-        } finally {
-            DOWNLOAD_LOCK.unlock();
         }
     }
 

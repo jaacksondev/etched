@@ -29,7 +29,7 @@ public class BoomboxMenu extends AbstractContainerMenu {
         this.addSlot(new Slot(this.boomboxInventory, 0, 80, 20) {
             @Override
             public boolean mayPlace(ItemStack stack) {
-                return stack.getItem() instanceof PlayableRecord;
+                return PlayableRecord.isPlayableRecord(stack);
             }
 
             @Override
@@ -68,7 +68,7 @@ public class BoomboxMenu extends AbstractContainerMenu {
     public ItemStack quickMoveStack(Player player, int index) {
         ItemStack itemStack = ItemStack.EMPTY;
         Slot slot = this.slots.get(index);
-        if (slot != null && slot.hasItem()) {
+        if (slot.hasItem()) {
             ItemStack itemStack2 = slot.getItem();
             itemStack = itemStack2.copy();
             if (index == 0) {

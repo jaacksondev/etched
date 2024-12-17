@@ -1,4 +1,4 @@
-package gg.moonflower.etched.core.mixin.client;
+package gg.moonflower.etched.core.mixin.client.render;
 
 import com.llamalad7.mixinextras.sugar.Local;
 import com.llamalad7.mixinextras.sugar.ref.LocalRef;

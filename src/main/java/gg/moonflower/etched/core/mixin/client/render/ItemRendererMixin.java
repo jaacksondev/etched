@@ -1,4 +1,4 @@
-package gg.moonflower.etched.core.mixin.client;
+package gg.moonflower.etched.core.mixin.client.render;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import gg.moonflower.etched.core.Etched;

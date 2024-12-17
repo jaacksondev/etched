@@ -1,8 +1,8 @@
 package gg.moonflower.etched.core;
 
+import com.mojang.logging.LogUtils;
 import gg.moonflower.etched.api.sound.download.SoundSourceManager;
 import gg.moonflower.etched.common.component.MusicLabelComponent;
-import gg.moonflower.etched.common.network.EtchedMessages;
 import gg.moonflower.etched.common.sound.download.BandcampSource;
 import gg.moonflower.etched.common.sound.download.SoundCloudSource;
 import gg.moonflower.etched.core.data.EtchedBlockTagsProvider;
@@ -29,6 +29,7 @@ import net.neoforged.neoforge.common.ModConfigSpec;
 import net.neoforged.neoforge.common.data.ExistingFileHelper;
 import net.neoforged.neoforge.data.event.GatherDataEvent;
 import org.apache.commons.lang3.tuple.Pair;
+import org.slf4j.Logger;
 
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
@@ -37,6 +38,7 @@ import java.util.concurrent.CompletableFuture;
 public class Etched {
 
     public static final String MOD_ID = "etched";
+    public static final Logger LOGGER = LogUtils.getLogger();
     public static final EtchedConfig.Client CLIENT_CONFIG;
     public static final EtchedConfig.Server SERVER_CONFIG;
     private static final ModConfigSpec clientSpec;
@@ -76,8 +78,6 @@ public class Etched {
     }
 
     private void init(FMLCommonSetupEvent event) {
-        EtchedMessages.init();
-
         SoundSourceManager.registerSource(new SoundCloudSource());
         SoundSourceManager.registerSource(new BandcampSource());
 

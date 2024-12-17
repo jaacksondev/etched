@@ -18,7 +18,6 @@ import java.util.concurrent.CompletionException;
 public class RawAudioSource implements AudioSource {
 
     private final CompletableFuture<AsyncInputStream.InputStreamSupplier> locationFuture;
-    private CompletableFuture<InputStream> stream;
 
     public RawAudioSource(URL url, @Nullable DownloadProgressListener listener, boolean temporary, AudioFileType type) {
         this.locationFuture = CompletableFuture.supplyAsync(() -> AudioSource.downloadTo(url, temporary, listener, type), Util.nonCriticalIoPool());
@@ -26,15 +25,12 @@ public class RawAudioSource implements AudioSource {
 
     @Override
     public CompletableFuture<InputStream> openStream() {
-        if (this.stream != null) {
-            return this.stream;
-        }
-        return this.stream = this.locationFuture.thenApplyAsync(stream -> {
+        return this.locationFuture.thenApply(stream -> {
             try {
                 return stream.get();
             } catch (Exception e) {
                 throw new CompletionException("Failed to open stream", e);
             }
-        }, Util.ioPool());
+        });
     }
 }

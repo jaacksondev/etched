@@ -1,4 +1,4 @@
-package gg.moonflower.etched.core.mixin.client;
+package gg.moonflower.etched.core.mixin.client.entity;
 
 import gg.moonflower.etched.common.item.BoomboxItem;
 import net.minecraft.world.entity.Entity;

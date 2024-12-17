@@ -3,9 +3,11 @@ package gg.moonflower.etched.client.screen;
 import com.mojang.blaze3d.systems.RenderSystem;
 import gg.moonflower.etched.api.record.PlayableRecord;
 import gg.moonflower.etched.api.record.TrackData;
+import gg.moonflower.etched.common.component.DiscAppearanceComponent;
 import gg.moonflower.etched.common.component.MusicLabelComponent;
-import gg.moonflower.etched.common.item.EtchedMusicDiscItem;
 import gg.moonflower.etched.common.menu.EtchingMenu;
+import gg.moonflower.etched.common.menu.UrlMenu;
+import gg.moonflower.etched.common.network.play.SetUrlPacket;
 import gg.moonflower.etched.core.Etched;
 import gg.moonflower.etched.core.registry.EtchedComponents;
 import gg.moonflower.etched.core.registry.EtchedItems;
@@ -22,6 +24,7 @@ import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.inventory.ContainerListener;
 import net.minecraft.world.item.ItemStack;
+import net.neoforged.neoforge.network.PacketDistributor;
 import org.apache.commons.lang3.tuple.Pair;
 
 import java.util.ArrayList;
@@ -31,7 +34,7 @@ import java.util.Objects;
 /**
  * @author Jackson
  */
-public class EtchingScreen extends AbstractContainerScreen<EtchingMenu> implements ContainerListener {
+public class EtchingScreen extends AbstractContainerScreen<EtchingMenu> implements ContainerListener, UrlMenu {
 
     private static final ResourceLocation TEXTURE = Etched.etchedPath("textures/gui/container/etching_table.png");
     private static final Component INVALID_URL = Component.translatable("screen." + Etched.MOD_ID + ".etching_table.error.invalid_url");
@@ -55,7 +58,7 @@ public class EtchingScreen extends AbstractContainerScreen<EtchingMenu> implemen
 
         this.discStack = ItemStack.EMPTY;
         this.labelStack = ItemStack.EMPTY;
-        this.musicLabel = MusicLabelComponent.EMPTY;
+        this.musicLabel = MusicLabelComponent.DEFAULT;
 
         this.invalidReason = "";
     }
@@ -67,15 +70,15 @@ public class EtchingScreen extends AbstractContainerScreen<EtchingMenu> implemen
         this.url.setTextColor(-1);
         this.url.setTextColorUneditable(-1);
         this.url.setBordered(false);
-        this.url.setMaxLength(32500);
+        this.url.setMaxLength(32768);
         this.url.setResponder(value -> {
             if (!Objects.equals(this.oldUrl, value) && this.urlTicks <= 0) {
-//                EtchedMessages.PLAY.sendToServer(new ServerboundSetUrlPacket(""));
+                PacketDistributor.sendToServer(new SetUrlPacket(""));
             }
             this.urlTicks = 10;
         });
         this.url.setCanLoseFocus(true);
-        this.addWidget(this.url);
+        this.addRenderableWidget(this.url);
         this.menu.addSlotListener(this);
     }
 
@@ -85,7 +88,7 @@ public class EtchingScreen extends AbstractContainerScreen<EtchingMenu> implemen
             this.urlTicks--;
             if (this.urlTicks <= 0 && !Objects.equals(this.oldUrl, this.url.getValue())) {
                 this.oldUrl = this.url.getValue();
-//                EtchedMessages.PLAY.sendToServer(new ServerboundSetUrlPacket(this.url.getValue()));
+                PacketDistributor.sendToServer(new SetUrlPacket(this.url.getValue()));
             }
         }
     }
@@ -93,12 +96,12 @@ public class EtchingScreen extends AbstractContainerScreen<EtchingMenu> implemen
     @Override
     public void slotChanged(AbstractContainerMenu menu, int slot, ItemStack stack) {
         if (slot == 0) {
-            PlayableRecord.getStackAlbum(stack).ifPresentOrElse(track -> this.url.setValue(track.url()), () -> this.url.setValue(""));
+            PlayableRecord.getAlbum(stack).ifPresent(track -> this.url.setValue(track.url()));
             this.discStack = stack;
         }
 
         if (slot == 1) {
-            this.musicLabel = stack.getOrDefault(EtchedComponents.MUSIC_LABEL, MusicLabelComponent.EMPTY);
+            this.musicLabel = stack.getOrDefault(EtchedComponents.MUSIC_LABEL, MusicLabelComponent.DEFAULT);
             this.labelStack = stack;
         }
 
@@ -119,7 +122,6 @@ public class EtchingScreen extends AbstractContainerScreen<EtchingMenu> implemen
     @Override
     public void render(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTicks) {
         super.render(guiGraphics, mouseX, mouseY, partialTicks);
-        this.url.render(guiGraphics, mouseX, mouseY, partialTicks);
         this.renderTooltip(guiGraphics, mouseX, mouseY);
     }
 
@@ -159,24 +161,24 @@ public class EtchingScreen extends AbstractContainerScreen<EtchingMenu> implemen
         guiGraphics.blit(TEXTURE, this.leftPos + 9, this.topPos + 21, 0, (this.discStack.getItem() == EtchedItems.ETCHED_MUSIC_DISC.get() || (!this.discStack.isEmpty() && !this.labelStack.isEmpty()) ? 180 : 196), 158, 16);
 
         if (this.displayLabels) {
-            for (int index = 0; index < 6; index++) {
+            DiscAppearanceComponent.LabelPattern[] patterns = DiscAppearanceComponent.LabelPattern.values();
+            for (int index = 0; index < patterns.length; index++) {
                 int x = this.leftPos + 46 + (index * 14);
                 int y = this.topPos + 65;
                 RenderSystem.setShaderTexture(0, TEXTURE);
 
                 int u = index == this.menu.getLabelIndex() ? 14 : mouseX >= x && mouseY >= y && mouseX < x + 14 && mouseY < y + 14 ? 28 : 0;
                 guiGraphics.blit(TEXTURE, x, y, u, 212, 14, 14);
-                this.renderLabel(guiGraphics, x, y, index);
+                this.renderLabel(guiGraphics, x, y, patterns[index]);
             }
         }
     }
 
-    private void renderLabel(GuiGraphics guiGraphics, int x, int y, int index) {
+    private void renderLabel(GuiGraphics guiGraphics, int x, int y, DiscAppearanceComponent.LabelPattern pattern) {
         if (this.labelStack.isEmpty() || this.discStack.isEmpty()) {
             return;
         }
 
-        EtchedMusicDiscItem.LabelPattern pattern = EtchedMusicDiscItem.LabelPattern.values()[index];
         int primaryLabelColor = this.musicLabel.primaryColor();
         int secondaryLabelColor = this.musicLabel.secondaryColor();
 
@@ -200,7 +202,7 @@ public class EtchingScreen extends AbstractContainerScreen<EtchingMenu> implemen
     @Override
     public boolean mouseClicked(double mouseX, double mouseY, int i) {
         if (this.displayLabels) {
-            for (int index = 0; index < 6; index++) {
+            for (int index = 0; index < DiscAppearanceComponent.LabelPattern.values().length; index++) {
                 int x = this.leftPos + 46 + (index * 14);
                 int y = this.topPos + 65;
 
@@ -222,5 +224,10 @@ public class EtchingScreen extends AbstractContainerScreen<EtchingMenu> implemen
 
     public void setReason(String exception) {
         this.invalidReason = exception;
+    }
+
+    @Override
+    public void setUrl(String url) {
+        this.url.setValue(url);
     }
 }

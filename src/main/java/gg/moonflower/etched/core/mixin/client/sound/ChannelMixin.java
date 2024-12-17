@@ -1,8 +1,6 @@
-package gg.moonflower.etched.core.mixin.client;
+package gg.moonflower.etched.core.mixin.client.sound;
 
 import com.mojang.blaze3d.audio.Channel;
-import com.mojang.blaze3d.audio.SoundBuffer;
-import net.minecraft.client.sounds.AudioStream;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;

@@ -172,8 +172,7 @@ public class BoomboxItem extends Item implements ContainerItem {
      * @param entity The entity to check
      * @return The hand the entity is using or <code>null</code> if no boombox is playing
      */
-    @Nullable
-    public static InteractionHand getPlayingHand(LivingEntity entity) {
+    public static @Nullable InteractionHand getPlayingHand(LivingEntity entity) {
         if (!PLAYING_RECORDS.containsKey(entity.getId())) {
             return null;
         }

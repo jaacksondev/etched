@@ -106,6 +106,6 @@ public class MinecartJukeboxItem extends Item {
         }
 
         itemstack.shrink(1);
-        return InteractionResult.sidedSuccess(level.isClientSide);
+        return InteractionResult.sidedSuccess(level.isClientSide());
     }
 }

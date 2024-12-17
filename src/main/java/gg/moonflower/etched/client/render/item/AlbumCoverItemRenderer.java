@@ -5,10 +5,11 @@ import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import gg.moonflower.etched.api.record.AlbumCover;
+import gg.moonflower.etched.api.record.PlayableRecord;
+import gg.moonflower.etched.common.component.AlbumCoverComponent;
 import gg.moonflower.etched.core.Etched;
-import it.unimi.dsi.fastutil.ints.Int2IntArrayMap;
+import gg.moonflower.etched.core.registry.EtchedComponents;
 import it.unimi.dsi.fastutil.ints.Int2ObjectArrayMap;
-import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.BlockEntityWithoutLevelRenderer;
 import net.minecraft.client.renderer.MultiBufferSource;
@@ -27,7 +28,6 @@ import net.minecraft.client.resources.model.BlockModelRotation;
 import net.minecraft.client.resources.model.ModelManager;
 import net.minecraft.client.resources.model.ModelResourceLocation;
 import net.minecraft.core.Direction;
-import net.minecraft.nbt.CompoundTag;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.packs.resources.PreparableReloadListener;
 import net.minecraft.server.packs.resources.ResourceManager;
@@ -44,7 +44,10 @@ import org.lwjgl.system.NativeResource;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.*;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
 
@@ -63,7 +66,7 @@ public class AlbumCoverItemRenderer extends BlockEntityWithoutLevelRenderer impl
     private static final ItemModelGenerator ITEM_MODEL_GENERATOR = new ItemModelGenerator();
     private static final BlockModel MODEL = BlockModel.fromString("{\"gui_light\":\"front\",\"textures\":{\"layer0\":\"texture\"},\"display\":{\"ground\":{\"rotation\":[0,0,0],\"translation\":[0,2,0],\"scale\":[0.5,0.5,0.5]},\"head\":{\"rotation\":[0,180,0],\"translation\":[0,13,7],\"scale\":[1,1,1]},\"thirdperson_righthand\":{\"rotation\":[0,0,0],\"translation\":[0,3,1],\"scale\":[0.55,0.55,0.55]},\"firstperson_righthand\":{\"rotation\":[0,-90,25],\"translation\":[1.13,3.2,1.13],\"scale\":[0.68,0.68,0.68]},\"fixed\":{\"rotation\":[0,180,0],\"scale\":[1,1,1]}}}");
 
-    private final Int2ObjectMap<CompletableFuture<EtchedModelData>> covers;
+    private final Map<Integer, CompletableFuture<EtchedModelData>> covers;
     private CoverData data;
 
     static {
@@ -150,17 +153,23 @@ public class AlbumCoverItemRenderer extends BlockEntityWithoutLevelRenderer impl
         if (stack.isEmpty()) {
             return;
         }
-//        ModelData model = stack.getTagElement("CoverRecord") == null ? this.data.blank : this.covers.computeIfAbsent(stack.getTagElement("CoverRecord"), __ -> {
-//            ItemStack coverStack = AlbumCoverItem.getCoverStack(stack).orElse(ItemStack.EMPTY);
-//            if (!coverStack.isEmpty() && coverStack.getItem() instanceof PlayableRecord) {
-//                return ((PlayableRecord) coverStack.getItem()).getAlbumCover(coverStack, Minecraft.getInstance().getProxy(), Minecraft.getInstance().getResourceManager()).thenApply(cover -> ModelData.of(cover).orElse(this.data.defaultCover)).exceptionally(e -> {
-//                    e.printStackTrace();
-//                    return this.data.defaultCover;
-//                });
-//            }
-//            return CompletableFuture.completedFuture(this.data.blank);
-//        }).getNow(this.data.defaultCover);
-        EtchedModelData model = this.data.blank;
+
+        EtchedModelData model = this.data.defaultCover;
+        AlbumCoverComponent albumCover = stack.get(EtchedComponents.ALBUM_COVER);
+        if (albumCover != null) {
+            ItemStack coverStack = albumCover.getCoverStack();
+            if (!coverStack.isEmpty()) {
+                model = this.covers.computeIfAbsent(ItemStack.hashItemAndComponents(coverStack), unused -> PlayableRecord.getAlbumCover(
+                                coverStack,
+                                Minecraft.getInstance().getProxy(),
+                                Minecraft.getInstance().getResourceManager())
+                        .exceptionally(t -> {
+                            Etched.LOGGER.error("Error retrieving album cover", t);
+                            return null;
+                        })
+                        .thenApply(cover -> EtchedModelData.of(cover).orElse(this.data.defaultCover))).getNow(this.data.defaultCover);
+            }
+        }
 
         poseStack.pushPose();
         poseStack.translate(0.5D, 0.5D, 0.5D);
@@ -211,6 +220,21 @@ public class AlbumCoverItemRenderer extends BlockEntityWithoutLevelRenderer impl
 
         @Override
         public void free() {
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (o == null || this.getClass() != o.getClass()) {
+                return false;
+            }
+
+            BakedModelData that = (BakedModelData) o;
+            return this.model.equals(that.model);
+        }
+
+        @Override
+        public int hashCode() {
+            return this.model.hashCode();
         }
     }
 
@@ -270,10 +294,25 @@ public class AlbumCoverItemRenderer extends BlockEntityWithoutLevelRenderer impl
             this.contents().close();
             Minecraft.getInstance().getTextureManager().release(this.contents().name());
         }
+
+        @Override
+        public boolean equals(Object o) {
+            if (o == null || this.getClass() != o.getClass()) {
+                return false;
+            }
+
+            DynamicModelData that = (DynamicModelData) o;
+            return this.model.equals(that.model);
+        }
+
+        @Override
+        public int hashCode() {
+            return this.model.hashCode();
+        }
     }
 
     @ApiStatus.Internal
-    sealed interface EtchedModelData extends NativeResource {
+    public sealed interface EtchedModelData extends NativeResource {
 
         static Optional<EtchedModelData> of(AlbumCover cover) {
             if (cover instanceof AlbumCover.ModelAlbumCover(ModelResourceLocation model)) {

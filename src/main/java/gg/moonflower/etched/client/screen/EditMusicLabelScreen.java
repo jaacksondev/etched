@@ -2,6 +2,7 @@ package gg.moonflower.etched.client.screen;
 
 import com.mojang.blaze3d.systems.RenderSystem;
 import gg.moonflower.etched.common.component.MusicLabelComponent;
+import gg.moonflower.etched.common.network.play.ServerboundEditMusicLabelPacket;
 import gg.moonflower.etched.core.Etched;
 import gg.moonflower.etched.core.registry.EtchedComponents;
 import net.minecraft.client.Minecraft;
@@ -16,6 +17,7 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
+import net.neoforged.neoforge.network.PacketDistributor;
 
 public class EditMusicLabelScreen extends Screen {
 
@@ -41,7 +43,7 @@ public class EditMusicLabelScreen extends Screen {
 
         MusicLabelComponent musicLabel = stack.get(EtchedComponents.MUSIC_LABEL);
         if (musicLabel == null) {
-            musicLabel = MusicLabelComponent.EMPTY.withAuthor(player.getDisplayName().getString());
+            musicLabel = MusicLabelComponent.DEFAULT.withArtist(player.getDisplayName().getString());
         }
         this.musicLabel = musicLabel;
     }
@@ -129,6 +131,6 @@ public class EditMusicLabelScreen extends Screen {
         int slot = this.hand == InteractionHand.MAIN_HAND ? this.player.getInventory().selected : 40;
         String author = this.author.getValue().trim();
         String title = this.title.getValue().trim();
-//        EtchedMessages.PLAY.sendToServer(new ServerboundEditMusicLabelPacket(slot, author, title));
+        PacketDistributor.sendToServer(new ServerboundEditMusicLabelPacket(slot, author, title));
     }
 }

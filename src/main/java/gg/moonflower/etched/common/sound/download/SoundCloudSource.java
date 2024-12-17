@@ -47,7 +47,7 @@ public class SoundCloudSource implements SoundDownloadSource {
         }
 
         try {
-            URL uRL = requiresId ? appendUri(url, "client_id=" + SoundCloudIdTracker.fetch(proxy)) : new URL(url);
+            URL uRL = requiresId ? appendUri(url, "client_id=" + SoundCloudIdTracker.fetch(proxy)) : new URI(url).toURL();
             httpURLConnection = (HttpURLConnection) uRL.openConnection(proxy);
             httpURLConnection.setInstanceFollowRedirects(true);
             Map<String, String> map = SoundDownloadSource.getDownloadHeaders();
@@ -76,7 +76,7 @@ public class SoundCloudSource implements SoundDownloadSource {
         }
     }
 
-    private <T> T resolve(String url, @Nullable DownloadProgressListener progressListener, Proxy proxy, SourceRequest<T> function) throws IOException, JsonParseException {
+    private <T> T resolve(String url, @Nullable DownloadProgressListener progressListener, Proxy proxy, SourceRequest<T> function) throws IOException, URISyntaxException, JsonParseException {
         try (InputStreamReader reader = new InputStreamReader(this.get("https://api-v2.soundcloud.com/resolve?url=" + URLEncoder.encode(url, StandardCharsets.UTF_8), progressListener, proxy, 0, true))) {
             JsonObject json = JsonParser.parseReader(reader).getAsJsonObject();
 
@@ -96,7 +96,7 @@ public class SoundCloudSource implements SoundDownloadSource {
     }
 
     @Override
-    public List<URL> resolveUrl(String url, @Nullable DownloadProgressListener progressListener, Proxy proxy) throws IOException {
+    public List<URL> resolveUrl(String url, @Nullable DownloadProgressListener progressListener, Proxy proxy) throws IOException, URISyntaxException, JsonParseException {
         return this.resolve(url, progressListener, proxy, json -> {
             if (progressListener != null) {
                 progressListener.progressStartRequest(RESOLVING_TRACKS);
@@ -124,13 +124,13 @@ public class SoundCloudSource implements SoundDownloadSource {
                 throw new IOException("Could not find an audio source");
             }
             try (InputStreamReader reader = new InputStreamReader(this.get(GsonHelper.getAsString(GsonHelper.convertToJsonObject(media.get(progressiveIndex), "transcodings[" + progressiveIndex + "]"), "url"), null, proxy, 0, true))) {
-                return Collections.singletonList(new URL(GsonHelper.getAsString(JsonParser.parseReader(reader).getAsJsonObject(), "url")));
+                return Collections.singletonList(new URI(GsonHelper.getAsString(JsonParser.parseReader(reader).getAsJsonObject(), "url")).toURL());
             }
         });
     }
 
     @Override
-    public List<TrackData> resolveTracks(String url, @Nullable DownloadProgressListener progressListener, Proxy proxy) throws IOException, JsonParseException {
+    public List<TrackData> resolveTracks(String url, @Nullable DownloadProgressListener progressListener, Proxy proxy) throws IOException, URISyntaxException, JsonParseException {
         return this.resolve(url, progressListener, proxy, json -> {
             JsonObject user = GsonHelper.getAsJsonObject(json, "user");
             String artist = GsonHelper.getAsString(user, "username");
@@ -153,7 +153,7 @@ public class SoundCloudSource implements SoundDownloadSource {
                         String trackTitle = GsonHelper.getAsString(trackJson, "title");
                         tracks.add(new TrackData(trackUrl, trackArtist, Component.literal(trackTitle)));
                     } catch (JsonParseException e) {
-                        LOGGER.error("Failed to parse track: " + url + "[" + i + "]", e);
+                        LOGGER.error("Failed to parse track: {}[{}]", url, i, e);
                     }
                 }
 
@@ -165,7 +165,7 @@ public class SoundCloudSource implements SoundDownloadSource {
     }
 
     @Override
-    public Optional<String> resolveAlbumCover(String url, @Nullable DownloadProgressListener progressListener, Proxy proxy, ResourceManager resourceManager) throws IOException {
+    public Optional<String> resolveAlbumCover(String url, @Nullable DownloadProgressListener progressListener, Proxy proxy, ResourceManager resourceManager) throws IOException, URISyntaxException, JsonParseException {
         return this.resolve(url, progressListener, proxy, json -> {
             if (!json.has("artwork_url") || json.get("artwork_url").isJsonNull()) {
                 return Optional.empty();

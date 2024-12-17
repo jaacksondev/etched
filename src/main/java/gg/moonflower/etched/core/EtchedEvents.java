@@ -1,19 +1,17 @@
 package gg.moonflower.etched.core;
 
-import gg.moonflower.etched.common.item.AlbumCoverItem;
+import gg.moonflower.etched.common.component.AlbumCoverComponent;
 import gg.moonflower.etched.core.registry.EtchedBlocks;
 import gg.moonflower.etched.core.registry.EtchedComponents;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
-import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.event.GrindstoneEvent;
 import net.neoforged.neoforge.event.entity.EntityTravelToDimensionEvent;
-import net.neoforged.neoforge.event.entity.player.ItemTooltipEvent;
 
-@EventBusSubscriber( modid = Etched.MOD_ID)
+@EventBusSubscriber(modid = Etched.MOD_ID)
 public class EtchedEvents {
 
     @SubscribeEvent
@@ -26,10 +24,10 @@ public class EtchedEvents {
         }
 
         ItemStack stack = top.isEmpty() ? bottom : top;
-        if (AlbumCoverItem.getCoverStack(stack).isPresent()) {
-            ItemStack result = stack.copy();
-            result.setCount(1);
-            AlbumCoverItem.setCover(result, ItemStack.EMPTY);
+        AlbumCoverComponent albumCover = stack.get(EtchedComponents.ALBUM_COVER);
+        if (albumCover != null && !albumCover.getCoverStack().isEmpty()) {
+            ItemStack result = stack.copyWithCount(1);
+            result.set(EtchedComponents.ALBUM_COVER, albumCover.toBuilder().setCoverStack(ItemStack.EMPTY).build());
             event.setOutput(result);
         }
     }

@@ -1,6 +1,8 @@
 package gg.moonflower.etched.client.screen;
 
 import gg.moonflower.etched.common.menu.RadioMenu;
+import gg.moonflower.etched.common.menu.UrlMenu;
+import gg.moonflower.etched.common.network.play.SetUrlPacket;
 import gg.moonflower.etched.core.Etched;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
@@ -11,13 +13,14 @@ import net.minecraft.network.chat.CommonComponents;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.player.Inventory;
+import net.neoforged.neoforge.network.PacketDistributor;
 
 import static org.lwjgl.glfw.GLFW.GLFW_KEY_ESCAPE;
 
 /**
  * @author Ocelot
  */
-public class RadioScreen extends AbstractContainerScreen<RadioMenu> {
+public class RadioScreen extends AbstractContainerScreen<RadioMenu> implements UrlMenu {
 
     private static final ResourceLocation TEXTURE = Etched.etchedPath("textures/gui/radio.png");
 
@@ -33,15 +36,15 @@ public class RadioScreen extends AbstractContainerScreen<RadioMenu> {
         super.init();
         String urlText = this.url != null ? this.url.getValue() : this.menu.getInitialUrl();
         this.url = new EditBox(this.font, this.leftPos + 10, this.topPos + 21, 154, 16, null, Component.translatable("container." + Etched.MOD_ID + ".radio.url"));
+        this.url.setMaxLength(32768);
         this.url.setValue(urlText);
         this.url.setTextColor(-1);
         this.url.setTextColorUneditable(-1);
         this.url.setBordered(false);
-        this.url.setMaxLength(32768);
         this.setFocused(this.url);
         this.addRenderableWidget(this.url);
         this.addRenderableWidget(Button.builder(CommonComponents.GUI_DONE, button -> {
-//            EtchedMessages.PLAY.sendToServer(new ServerboundSetUrlPacket(this.url.getValue()));
+            PacketDistributor.sendToServer(new SetUrlPacket(this.url.getValue()));
             Minecraft.getInstance().player.closeContainer();
         }).bounds((this.width - this.imageWidth) / 2, (this.height - this.imageHeight) / 2 + this.imageHeight + 5, this.imageWidth, 20).build());
     }
@@ -60,5 +63,10 @@ public class RadioScreen extends AbstractContainerScreen<RadioMenu> {
     @Override
     public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
         return this.url.keyPressed(keyCode, scanCode, modifiers) || (this.url.isFocused() && this.url.isVisible() && keyCode != GLFW_KEY_ESCAPE) || super.keyPressed(keyCode, scanCode, modifiers);
+    }
+
+    @Override
+    public void setUrl(String url) {
+        this.url.setValue(url);
     }
 }

@@ -19,44 +19,6 @@ public class MusicLabelItem extends Item {
         super(properties);
     }
 
-    @Deprecated
-    public static String getAuthor(ItemStack stack) {
-//        if (!(stack.getItem() instanceof SimpleMusicLabelItem)) {
-//            return "";
-//        }
-//        return stack.getOrCreateTagElement("Label").getString("Author");
-        return "";
-    }
-
-    @Deprecated
-    public static String getTitle(ItemStack stack) {
-//        if (!(stack.getItem() instanceof SimpleMusicLabelItem)) {
-//            return "";
-//        }
-//        return stack.getOrCreateTagElement("Label").getString("Title");
-        return "";
-    }
-
-    @Deprecated
-    public static void setAuthor(ItemStack stack, String author) {
-//        if (!(stack.getItem() instanceof SimpleMusicLabelItem)) {
-//            return;
-//        }
-//
-//        CompoundTag tag = stack.getOrCreateTagElement("Label");
-//        tag.putString("Author", author);
-    }
-
-    @Deprecated
-    public static void setTitle(ItemStack stack, String title) {
-//        if (!(stack.getItem() instanceof SimpleMusicLabelItem)) {
-//            return;
-//        }
-//
-//        CompoundTag tag = stack.getOrCreateTagElement("Label");
-//        tag.putString("Title", title);
-    }
-
     private void openMusicLabelEditScreen(Player player, InteractionHand hand, ItemStack stack) {
         Minecraft.getInstance().setScreen(new EditMusicLabelScreen(player, hand, stack));
     }
@@ -74,9 +36,9 @@ public class MusicLabelItem extends Item {
     @Override
     public void inventoryTick(ItemStack stack, Level level, Entity entity, int slotId, boolean isSelected) {
         if (!level.isClientSide()) {
-            MusicLabelComponent label = stack.getOrDefault(EtchedComponents.MUSIC_LABEL, MusicLabelComponent.EMPTY);
+            MusicLabelComponent label = stack.getOrDefault(EtchedComponents.MUSIC_LABEL, MusicLabelComponent.DEFAULT);
             if (label.artist().isEmpty()) {
-                stack.set(EtchedComponents.MUSIC_LABEL, label.withAuthor(entity.getDisplayName().getString()));
+                stack.set(EtchedComponents.MUSIC_LABEL, label.withArtist(entity.getDisplayName().getString()));
             }
         }
     }

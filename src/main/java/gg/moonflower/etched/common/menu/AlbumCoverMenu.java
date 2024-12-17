@@ -1,7 +1,6 @@
 package gg.moonflower.etched.common.menu;
 
-import gg.moonflower.etched.api.record.PlayableRecord;
-import gg.moonflower.etched.common.item.AlbumCoverItem;
+import gg.moonflower.etched.common.component.AlbumCoverComponent;
 import gg.moonflower.etched.core.registry.EtchedItems;
 import gg.moonflower.etched.core.registry.EtchedMenus;
 import net.minecraft.world.Container;
@@ -17,9 +16,7 @@ import net.minecraft.world.item.ItemStack;
  */
 public class AlbumCoverMenu extends AbstractContainerMenu {
 
-    private final Inventory inventory;
     private final Container albumCoverInventory;
-    private final int albumCoverIndex;
 
     public AlbumCoverMenu(int containerId, Inventory inventory) {
         this(containerId, inventory, -1);
@@ -27,16 +24,14 @@ public class AlbumCoverMenu extends AbstractContainerMenu {
 
     public AlbumCoverMenu(int containerId, Inventory inventory, int albumCoverIndex) {
         super(EtchedMenus.ALBUM_COVER_MENU.get(), containerId);
-        this.albumCoverInventory = albumCoverIndex == -1 ? new SimpleContainer(AlbumCoverItem.MAX_RECORDS) : new AlbumCoverContainer(inventory, albumCoverIndex);
-        this.albumCoverIndex = albumCoverIndex;
-        this.inventory = inventory;
+        this.albumCoverInventory = albumCoverIndex == -1 ? new SimpleContainer(AlbumCoverComponent.MAX_RECORDS) : new AlbumCoverContainer(inventory, albumCoverIndex);
 
         for (int n = 0; n < 3; ++n) {
             for (int m = 0; m < 3; ++m) {
                 this.addSlot(new Slot(this.albumCoverInventory, m + n * 3, 62 + m * 18, 17 + n * 18) {
                     @Override
                     public boolean mayPlace(ItemStack stack) {
-                        return isValid(stack);
+                        return AlbumCoverComponent.isValid(stack);
                     }
                 });
             }
@@ -69,36 +64,17 @@ public class AlbumCoverMenu extends AbstractContainerMenu {
     }
 
     @Override
-    public void removed(Player player) {
-        super.removed(player);
-
-        if (this.albumCoverIndex == -1) {
-            return;
-        }
-        ItemStack cover = this.inventory.getItem(this.albumCoverIndex);
-        if (!AlbumCoverItem.getCoverStack(cover).isPresent()) {
-            for (int i = 0; i < this.albumCoverInventory.getContainerSize(); i++) {
-                ItemStack stack = this.albumCoverInventory.getItem(i);
-                if (!stack.isEmpty()) {
-                    AlbumCoverItem.setCover(cover, stack);
-                    break;
-                }
-            }
-        }
-    }
-
-    @Override
     public ItemStack quickMoveStack(Player player, int index) {
         ItemStack itemStack = ItemStack.EMPTY;
         Slot slot = this.slots.get(index);
-        if (slot != null && slot.hasItem()) {
+        if (slot.hasItem()) {
             ItemStack itemStack2 = slot.getItem();
             itemStack = itemStack2.copy();
-            if (index < 9) {
-                if (!this.moveItemStackTo(itemStack2, 9, 45, true)) {
+            if (index < this.albumCoverInventory.getContainerSize()) {
+                if (!this.moveItemStackTo(itemStack2, this.albumCoverInventory.getContainerSize(), this.slots.size(), true)) {
                     return ItemStack.EMPTY;
                 }
-            } else if (!this.moveItemStackTo(itemStack2, 0, 9, false)) {
+            } else if (!this.moveItemStackTo(itemStack2, 0, this.albumCoverInventory.getContainerSize(), false)) {
                 return ItemStack.EMPTY;
             }
 
@@ -110,9 +86,5 @@ public class AlbumCoverMenu extends AbstractContainerMenu {
         }
 
         return itemStack;
-    }
-
-    public static boolean isValid(ItemStack stack) {
-        return PlayableRecord.isPlayableRecord(stack) && !stack.is(EtchedItems.ALBUM_COVER.get());
     }
 }

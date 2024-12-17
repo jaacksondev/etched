@@ -4,22 +4,24 @@
   "compatibilityLevel": "JAVA_21",
   "minVersion": "0.8",
   "client": [
-    "client.ChannelMixin",
-    "client.ClientLivingEntityMixin",
-    "client.ForgeIngameGuiMixin",
-    "client.GuiAccessor",
-    "client.GuiMixin",
-    "client.HumanoidModelMixin",
-    "client.ItemRendererMixin",
-    "client.LevelRendererAccessor",
-    "client.LevelRendererMixin",
-    "client.ParrotMixin",
-    "client.SoundEngineMixin"
+    "client.entity.ClientLivingEntityMixin",
+    "client.entity.ParrotMixin",
+    "client.gui.ForgeIngameGuiMixin",
+    "client.gui.GuiAccessor",
+    "client.gui.GuiMixin",
+    "client.render.HumanoidModelMixin",
+    "client.render.ItemRendererMixin",
+    "client.render.LevelRendererAccessor",
+    "client.render.LevelRendererMixin",
+    "client.render.ParrotModelMixin",
+    "client.sound.ChannelMixin",
+    "client.sound.SoundEngineMixin"
   ],
   "mixins": [
     "NoteBlockMixin",
     "StructureTemplatePoolAccessor",
-    "VillagerGoalPackagesMixin"
+    "VillagerGoalPackagesMixin",
+    "component.JukeboxSongMixin"
   ],
   "injectors": {
     "defaultRequire": 1

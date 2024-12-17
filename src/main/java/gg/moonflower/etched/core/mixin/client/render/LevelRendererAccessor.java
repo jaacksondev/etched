@@ -1,4 +1,4 @@
-package gg.moonflower.etched.core.mixin.client;
+package gg.moonflower.etched.core.mixin.client.render;
 
 import net.minecraft.client.renderer.LevelRenderer;
 import net.minecraft.client.resources.sounds.SoundInstance;

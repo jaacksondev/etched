@@ -1,32 +1,45 @@
 package gg.moonflower.etched.common.network;
 
+import gg.moonflower.etched.common.network.play.*;
+import gg.moonflower.etched.common.network.play.handler.EtchedClientPlayPacketHandler;
+import gg.moonflower.etched.common.network.play.handler.EtchedServerPlayPacketHandler;
+import gg.moonflower.etched.core.Etched;
+import net.minecraft.network.RegistryFriendlyByteBuf;
+import net.minecraft.network.codec.StreamCodec;
+import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.EventBusSubscriber;
+import net.neoforged.neoforge.network.event.RegisterPayloadHandlersEvent;
+import net.neoforged.neoforge.network.handling.IPayloadHandler;
+import net.neoforged.neoforge.network.registration.PayloadRegistrar;
+
+@EventBusSubscriber(modid = Etched.MOD_ID, bus = EventBusSubscriber.Bus.MOD)
 public class EtchedMessages {
 
-//    public static final SimpleChannel PLAY = NetworkRegistry.newSimpleChannel(new ResourceLocation(Etched.MOD_ID, "play"), () -> "3", "3"::equals, "3"::equals);
+    @SubscribeEvent
+    public static void init(RegisterPayloadHandlersEvent event) {
+        PayloadRegistrar registrar = event.registrar("4");
 
-    private static int index = 0;
+        // Client
+        registrar.playToClient(ClientboundInvalidEtchUrlPacket.TYPE, ClientboundInvalidEtchUrlPacket.CODEC, EtchedClientPlayPacketHandler::handleSetInvalidEtch);
+        registrar.playToClient(ClientboundPlayBlockMusicPacket.TYPE, ClientboundPlayBlockMusicPacket.CODEC, EtchedClientPlayPacketHandler::handlePlayBlockMusicPacket);
+        registrar.playToClient(ClientboundPlayEntityMusicPacket.TYPE, ClientboundPlayEntityMusicPacket.CODEC, EtchedClientPlayPacketHandler::handlePlayEntityMusicPacket);
 
-    public static synchronized void init() {
-//        register(ClientboundInvalidEtchUrlPacket.class, ClientboundInvalidEtchUrlPacket::new, NetworkDirection.PLAY_TO_CLIENT);
-//        register(ClientboundPlayEntityMusicPacket.class, ClientboundPlayEntityMusicPacket::new, NetworkDirection.PLAY_TO_CLIENT);
-//        register(ClientboundPlayMusicPacket.class, ClientboundPlayMusicPacket::new, NetworkDirection.PLAY_TO_CLIENT);
-//        register(ClientboundSetUrlPacket.class, ClientboundSetUrlPacket::new, NetworkDirection.PLAY_TO_CLIENT);
-//        register(ServerboundSetUrlPacket.class, ServerboundSetUrlPacket::new, NetworkDirection.PLAY_TO_SERVER);
-//        register(ServerboundEditMusicLabelPacket.class, ServerboundEditMusicLabelPacket::new, NetworkDirection.PLAY_TO_SERVER);
-//        register(SetAlbumJukeboxTrackPacket.class, SetAlbumJukeboxTrackPacket::new, null); // Bidirectional
+        // Server
+        registrar.playToServer(ServerboundEditMusicLabelPacket.TYPE, ServerboundEditMusicLabelPacket.CODEC, EtchedServerPlayPacketHandler::handleEditMusicLabel);
+
+        // Bidirectional
+        registerBidirectional(registrar, SetAlbumJukeboxTrackPacket.TYPE, SetAlbumJukeboxTrackPacket.CODEC, EtchedClientPlayPacketHandler::handleSetAlbumJukeboxTrack, EtchedServerPlayPacketHandler::handleSetAlbumJukeboxTrack);
+        registerBidirectional(registrar, SetUrlPacket.TYPE, SetUrlPacket.CODEC, EtchedClientPlayPacketHandler::handleSetUrl, EtchedServerPlayPacketHandler::handleSetUrl);
     }
 
-//    private static <MSG extends EtchedPacket> void register(Class<MSG> clazz, Function<FriendlyByteBuf, MSG> decoder, @Nullable NetworkDirection direction) {
-//        PLAY.registerMessage(index++, clazz, (msg, friendlyByteBuf) -> {
-//            try {
-//                msg.writePacketData(friendlyByteBuf);
-//            } catch (Exception e) {
-//                throw new EncoderException(e);
-//            }
-//        }, decoder, (msg, ctx) -> {
-//            NetworkEvent.Context context = ctx.get();
-//            msg.processPacket(context);
-//            context.setPacketHandled(true);
-//        }, Optional.ofNullable(direction));
-//    }
+    private static <T extends CustomPacketPayload> void registerBidirectional(PayloadRegistrar registrar, CustomPacketPayload.Type<T> type, StreamCodec<? super RegistryFriendlyByteBuf, T> reader, IPayloadHandler<T> clientHandler, IPayloadHandler<T> serverHandler) {
+        registrar.playBidirectional(type, reader, (pkt, ctx) -> {
+            if (ctx.flow().isClientbound()) {
+                clientHandler.handle(pkt, ctx);
+            } else {
+                serverHandler.handle(pkt, ctx);
+            }
+        });
+    }
 }

@@ -1,4 +1,4 @@
-package gg.moonflower.etched.core.mixin.client;
+package gg.moonflower.etched.core.mixin.client.entity;
 
 import gg.moonflower.etched.api.sound.SoundTracker;
 import gg.moonflower.etched.common.item.BoomboxItem;
@@ -46,7 +46,7 @@ public abstract class ParrotMixin extends Entity {
 
     @Inject(method = "aiStep", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/entity/animal/ShoulderRidingEntity;aiStep()V"))
     public void addAudioProviders(CallbackInfo ci) {
-        if (this.etched$musicPos == null || !this.etched$musicPos.closerToCenterThan(this.position(), 3.46) || !this.level().getBlockState(this.etched$musicPos).is(Blocks.JUKEBOX) && !this.level().getBlockState(this.etched$musicPos).is(EtchedTags.AUDIO_PROVIDER)) {
+        if (this.etched$musicPos == null || !this.etched$musicPos.closerToCenterThan(this.position(), 3.46) || !this.level().getBlockState(this.etched$musicPos).is(EtchedTags.AUDIO_PROVIDER)) {
             this.partyParrot = false;
             this.jukebox = null;
         } else {

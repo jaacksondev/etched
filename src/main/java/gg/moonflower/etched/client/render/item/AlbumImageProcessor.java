@@ -18,7 +18,7 @@ public final class AlbumImageProcessor {
     }
 
     public static NativeImage apply(NativeImage image, NativeImage overlay) {
-        NativeImage nativeImage2 = new NativeImage(overlay.getWidth(), overlay.getHeight(), true);
+        NativeImage result = new NativeImage(overlay.getWidth(), overlay.getHeight(), true);
 
         float xFactor = (float) image.getWidth() / (float) (overlay.getWidth() * 2);
         float yFactor = (float) image.getHeight() / (float) (overlay.getHeight() * 2);
@@ -30,12 +30,11 @@ public final class AlbumImageProcessor {
                 int y2 = (int) (yFactor * (n * 2 + 1));
                 int baseColor = alphaBlend(image.getPixelRGBA(x1, y1), image.getPixelRGBA(x2, y1), image.getPixelRGBA(x1, y2), image.getPixelRGBA(x2, y2));
                 int overlayColor = overlay.getPixelRGBA(m, n);
-                nativeImage2.setPixelRGBA(m, n, (overlayColor & 0xFF000000) | multiply(baseColor, overlayColor, 16) | multiply(baseColor, overlayColor, 8) | multiply(baseColor, overlayColor, 0));
+                result.setPixelRGBA(m, n, (overlayColor & 0xFF000000) | multiply(baseColor, overlayColor, 16) | multiply(baseColor, overlayColor, 8) | multiply(baseColor, overlayColor, 0));
             }
         }
 
-        image.close();
-        return nativeImage2;
+        return result;
     }
 
     private static int multiply(int col1, int col2, int bitOffset) {

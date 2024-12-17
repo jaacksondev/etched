@@ -59,32 +59,32 @@ public class MusicLabelMergeRecipe extends CustomRecipe {
 
         ItemStack first = labels.get(0);
         ItemStack second = labels.get(1);
-        MusicLabelComponent firstLabel = first.getOrDefault(EtchedComponents.MUSIC_LABEL, MusicLabelComponent.EMPTY);
-        MusicLabelComponent secondLabel = second.getOrDefault(EtchedComponents.MUSIC_LABEL, MusicLabelComponent.EMPTY);
+        MusicLabelComponent firstLabel = first.getOrDefault(EtchedComponents.MUSIC_LABEL, MusicLabelComponent.DEFAULT);
+        MusicLabelComponent secondLabel = second.getOrDefault(EtchedComponents.MUSIC_LABEL, MusicLabelComponent.DEFAULT);
 
         if (!firstLabel.simple() || !secondLabel.simple()) {
             return ItemStack.EMPTY;
         }
 
-        ItemStack stack = first.copyWithCount(1);
+        ItemStack stack = first.copy();
         stack.set(EtchedComponents.MUSIC_LABEL, merge(firstLabel, secondLabel));
         return stack;
     }
 
     private static MusicLabelComponent merge(MusicLabelComponent first, MusicLabelComponent second) {
-        boolean hasFirst = !first.equals(MusicLabelComponent.EMPTY);
-        boolean hasSecond = !second.equals(MusicLabelComponent.EMPTY);
+        boolean hasFirst = !first.equals(MusicLabelComponent.DEFAULT);
+        boolean hasSecond = !second.equals(MusicLabelComponent.DEFAULT);
         if (hasFirst ^ hasSecond) {
             return hasFirst ? first : second;
         }
         if (!hasFirst) {
-            return MusicLabelComponent.EMPTY;
+            return MusicLabelComponent.DEFAULT;
         }
 
         String author = first.artist().isBlank() ? second.artist() : first.artist();
         String title = first.title().isBlank() ? second.title() : first.title();
         if (title.isBlank()) {
-            title = MusicLabelComponent.EMPTY.title();
+            title = MusicLabelComponent.DEFAULT.title();
         }
 
         return new MusicLabelComponent(author, title, first.primaryColor(), second.primaryColor());

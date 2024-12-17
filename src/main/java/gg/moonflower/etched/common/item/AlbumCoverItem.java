@@ -1,27 +1,30 @@
 package gg.moonflower.etched.common.item;
 
-import gg.moonflower.etched.api.record.PlayableRecord;
 import gg.moonflower.etched.api.record.PlayableRecordItem;
-import gg.moonflower.etched.api.record.TrackData;
+import gg.moonflower.etched.common.component.AlbumCoverComponent;
 import gg.moonflower.etched.common.menu.AlbumCoverMenu;
 import gg.moonflower.etched.core.Etched;
+import gg.moonflower.etched.core.registry.EtchedComponents;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvents;
+import net.minecraft.stats.Stats;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResultHolder;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.SlotAccess;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.AbstractContainerMenu;
+import net.minecraft.world.inventory.ClickAction;
+import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.ItemUtils;
 import net.minecraft.world.level.Level;
 
-import java.util.*;
+import java.util.List;
 
 public class AlbumCoverItem extends PlayableRecordItem implements ContainerItem {
-
-    public static final int MAX_RECORDS = 9;
 
     public AlbumCoverItem(Properties properties) {
         super(properties);
@@ -31,16 +34,16 @@ public class AlbumCoverItem extends PlayableRecordItem implements ContainerItem 
     public InteractionResultHolder<ItemStack> use(Level level, Player player, InteractionHand hand) {
         ItemStack stack = player.getItemInHand(hand);
 
-        if (player.isSecondaryUseActive()) {
-//            if (dropContents(stack, player)) {
-//                this.playDropContentsSound(player);
-//                player.awardStat(Stats.ITEM_USED.get(this));
-//                return InteractionResultHolder.sidedSuccess(stack, level.isClientSide());
-//            }
-            return InteractionResultHolder.pass(stack);
-        }
-
         if (!Etched.SERVER_CONFIG.useAlbumCoverMenu.get()) {
+            if (player.isSecondaryUseActive()) {
+                if (dropContents(stack, player)) {
+                    this.playDropContentsSound(player);
+                    player.awardStat(Stats.ITEM_USED.get(this));
+                    return InteractionResultHolder.sidedSuccess(stack, level.isClientSide());
+                }
+                return InteractionResultHolder.pass(stack);
+            }
+
             return InteractionResultHolder.fail(stack);
         }
         return this.use(this, level, player, hand);
@@ -51,64 +54,80 @@ public class AlbumCoverItem extends PlayableRecordItem implements ContainerItem 
         return new AlbumCoverMenu(containerId, inventory, index);
     }
 
-//    @Override
-//    public boolean overrideStackedOnOther(ItemStack albumCover, Slot slot, ClickAction clickAction, Player player) {
-//        if (Etched.SERVER_CONFIG.useAlbumCoverMenu.get()) {
-//            return false;
-//        }
-//        if (clickAction != ClickAction.SECONDARY) {
-//            return false;
-//        }
-//
-//        ItemStack clickItem = slot.getItem();
-//        if (clickItem.isEmpty()) {
-//            removeOne(albumCover).ifPresent(record -> {
-//                this.playRemoveOneSound(player);
-//                add(albumCover, slot.safeInsert(record));
-//            });
-//        } else if (canAdd(albumCover, clickItem)) {
-//            this.playInsertSound(player);
-//            add(albumCover, slot.safeTake(clickItem.getCount(), 1, player));
-//        }
-//
-//        return true;
-//    }
-//
-//    @Override
-//    public boolean overrideOtherStackedOnMe(ItemStack albumCover, ItemStack clickItem, Slot slot, ClickAction clickAction, Player player, SlotAccess slotAccess) {
-//        if (Etched.SERVER_CONFIG.useAlbumCoverMenu.get()) {
-//            return false;
-//        }
-//        if (clickAction == ClickAction.SECONDARY && slot.allowModification(player)) {
-//            if (clickItem.isEmpty()) {
-//                removeOne(albumCover).ifPresent(removedRecord -> {
-//                    this.playRemoveOneSound(player);
-//                    slotAccess.set(removedRecord);
-//                });
-//            } else if (canAdd(albumCover, clickItem)) {
-//                this.playInsertSound(player);
-//                add(albumCover, clickItem);
-//            }
-//
-//            return true;
-//        }
-//
-//        return false;
-//    }
+    @Override
+    public boolean overrideStackedOnOther(ItemStack stack, Slot slot, ClickAction clickAction, Player player) {
+        if (Etched.SERVER_CONFIG.useAlbumCoverMenu.get()) {
+            return false;
+        }
+        if (clickAction != ClickAction.SECONDARY) {
+            return false;
+        }
 
-//    @Override
-//    public void appendHoverText(ItemStack stack, @Nullable Level level, List<Component> list, TooltipFlag tooltipFlag) {
-//        for (ItemStack record : getRecords(stack)) {
-//            if (record.getItem() instanceof PlayableRecord) {
-//                record.getItem().appendHoverText(record, level, list, tooltipFlag);
-//            }
-//        }
-//    }
-    // FIXME
+        AlbumCoverComponent.Builder albumCover = AlbumCoverComponent.builder(stack);
+        ItemStack clickItem = slot.getItem();
+        if (clickItem.isEmpty()) {
+            ItemStack removed = albumCover.extract(slot.container);
+            if (!removed.isEmpty()) {
+                this.playRemoveOneSound(player);
+                ItemStack remaining = slot.safeInsert(removed);
+                if (!remaining.isEmpty()) {
+                    albumCover.insert(remaining);
+                }
+            }
+        } else {
+            int count = slot.getItem().getCount();
+            ItemStack remaining = albumCover.insert(slot.safeTake(count, count, player));
+            if (count != remaining.getCount()) {
+                this.playInsertSound(player);
+                stack.set(EtchedComponents.ALBUM_COVER, albumCover.build());
+            }
+            slot.set(remaining);
+        }
+
+        return true;
+    }
+
+    @Override
+    public boolean overrideOtherStackedOnMe(ItemStack stack, ItemStack clickItem, Slot slot, ClickAction clickAction, Player player, SlotAccess access) {
+        if (Etched.SERVER_CONFIG.useAlbumCoverMenu.get()) {
+            return false;
+        }
+        if (clickAction != ClickAction.SECONDARY) {
+            return false;
+        }
+        if (!slot.allowModification(player)) {
+            return false;
+        }
+
+        AlbumCoverComponent.Builder albumCover = AlbumCoverComponent.builder(stack);
+        if (clickItem.isEmpty()) {
+            ItemStack removed = albumCover.extract(slot.container);
+            if (!removed.isEmpty()) {
+                this.playRemoveOneSound(player);
+                access.set(removed);
+            }
+        } else {
+            ItemStack remaining = albumCover.insert(clickItem);
+            if (clickItem.getCount() != remaining.getCount()) {
+                this.playInsertSound(player);
+                access.set(remaining);
+                stack.set(EtchedComponents.ALBUM_COVER, albumCover.build());
+            }
+        }
+
+        return true;
+    }
 
     @Override
     public void onDestroyed(ItemEntity itemEntity) {
-        ItemUtils.onContainerDestroyed(itemEntity, getRecords(itemEntity.getItem()));
+        AlbumCoverComponent albumCover = itemEntity.getItem().get(EtchedComponents.ALBUM_COVER);
+        if (albumCover != null) {
+            List<ItemStack> items = albumCover.getItems();
+            AlbumCoverComponent.Builder builder = albumCover.toBuilder();
+            builder.clearContent();
+            itemEntity.getItem().set(EtchedComponents.ALBUM_COVER, builder.build());
+            ItemUtils.onContainerDestroyed(itemEntity, items);
+        }
     }
 
     private void playRemoveOneSound(Entity entity) {
@@ -123,163 +142,26 @@ public class AlbumCoverItem extends PlayableRecordItem implements ContainerItem 
         entity.playSound(SoundEvents.BUNDLE_DROP_CONTENTS, 0.8F, 0.8F + entity.level().getRandom().nextFloat() * 0.4F);
     }
 
-//    private static Optional<ItemStack> removeOne(ItemStack albumCover) {
-//        CompoundTag tag = albumCover.getOrCreateTag();
-//        if (!tag.contains("Records", Tag.TAG_LIST)) {
-//            return Optional.empty();
-//        }
-//
-//        ListTag recordsNbt = tag.getList("Records", Tag.TAG_COMPOUND);
-//        if (recordsNbt.isEmpty()) {
-//            return Optional.empty();
-//        }
-//
-//        CompoundTag recordNbt = recordsNbt.getCompound(recordsNbt.size() - 1);
-//        ItemStack recordStack = ItemStack.of(recordNbt);
-//        recordsNbt.remove(recordsNbt.size() - 1);
-//
-//        return Optional.of(recordStack);
-//    }
-//
-//    private static boolean dropContents(ItemStack itemStack, Player player) {
-//        CompoundTag tag = itemStack.getOrCreateTag();
-//        if (!tag.contains("Records")) {
-//            return false;
-//        }
-//
-//        if (player instanceof ServerPlayer) {
-//            ListTag listTag = tag.getList("Records", Tag.TAG_COMPOUND);
-//
-//            for (int i = 0; i < listTag.size(); i++) {
-//                player.getInventory().placeItemBackInInventory(ItemStack.of(listTag.getCompound(i)));
-//            }
-//        }
-//
-//        itemStack.removeTagKey("Records");
-//        return true;
-//    }
-//
-//    private static void add(ItemStack albumCover, ItemStack record) {
-//        if (!albumCover.is(EtchedItems.ALBUM_COVER.get()) || !AlbumCoverMenu.isValid(record)) {
-//            return;
-//        }
-//
-//        CompoundTag tag = albumCover.getOrCreateTag();
-//        if (!tag.contains("Records")) {
-//            tag.put("Records", new ListTag());
-//        }
-//
-//        ListTag recordsNbt = tag.getList("Records", Tag.TAG_COMPOUND);
-//
-//        ItemStack singleRecord = record.split(1);
-//        CompoundTag recordTag = new CompoundTag();
-//        singleRecord.save(recordTag);
-//        recordsNbt.add(recordTag);
-//
-//        if (getCoverStack(albumCover).isEmpty()) {
-//            getRecords(albumCover).stream().filter(stack -> !stack.isEmpty()).findFirst().ifPresent(stack -> setCover(albumCover, stack));
-//        }
-//    }
-//
-//    private static boolean canAdd(ItemStack albumCover, ItemStack record) {
-//        if (!albumCover.is(EtchedItems.ALBUM_COVER.get()) || !AlbumCoverMenu.isValid(record)) {
-//            return false;
-//        }
-//        return albumCover.getTag() == null || !albumCover.getTag().contains("Records", Tag.TAG_LIST) || albumCover.getTag().getList("Records", Tag.TAG_COMPOUND).size() < MAX_RECORDS;
-//    }
-    // FIXME
+    private static boolean dropContents(ItemStack stack, Player player) {
+        AlbumCoverComponent albumCover = stack.get(EtchedComponents.ALBUM_COVER);
+        if (albumCover != null && !albumCover.isEmpty()) {
+            List<ItemStack> items = albumCover.getItems();
+            AlbumCoverComponent.Builder builder = albumCover.toBuilder();
+            builder.clearContent();
+            stack.set(EtchedComponents.ALBUM_COVER, builder.build());
+            if (player instanceof ServerPlayer) {
+                items.forEach(item -> player.drop(item, true));
+            }
 
-    @Override
-    public Optional<TrackData[]> getMusic(ItemStack stack) {
-        List<ItemStack> records = getRecords(stack);
-        return records.isEmpty() ? Optional.empty() : Optional.of(records.stream().filter(record -> record.getItem() instanceof PlayableRecord).flatMap(record -> Arrays.stream(((PlayableRecord) record.getItem()).getMusic(record).orElseGet(() -> new TrackData[0]))).toArray(TrackData[]::new));
-    }
+            return true;
+        }
 
-    @Override
-    public Optional<TrackData> getAlbum(ItemStack stack) {
-        return Optional.empty();
-    }
-
-    @Override
-    public int getTrackCount(ItemStack stack) {
-        return getRecords(stack).stream().filter(record -> record.getItem() instanceof PlayableRecord).mapToInt(record -> ((PlayableRecord) record.getItem()).getTrackCount(record)).sum();
+        return false;
     }
 
     @Override
     public boolean canGrindstoneRepair(ItemStack stack) {
-        return getCoverStack(stack).isPresent();
-    }
-
-    public static Optional<ItemStack> getCoverStack(ItemStack stack) {
-//        if (stack.getItem() != EtchedItems.ALBUM_COVER.get()) {
-        return Optional.empty();
-//        }
-//
-//        CompoundTag nbt = stack.getTag();
-//        if (nbt == null || !nbt.contains("CoverRecord", Tag.TAG_COMPOUND)) {
-//            return Optional.empty();
-//        }
-//
-//        ItemStack cover = ItemStack.of(nbt.getCompound("CoverRecord"));
-//        return cover.isEmpty() ? Optional.empty() : Optional.of(cover);
-    }
-
-    public static List<ItemStack> getRecords(ItemStack stack) {
-//        if (stack.getItem() != EtchedItems.ALBUM_COVER.get()) {
-        return Collections.emptyList();
-//        }
-//
-//        CompoundTag nbt = stack.getTag();
-//        if (nbt == null || !nbt.contains("Records", Tag.TAG_LIST)) {
-//            return Collections.emptyList();
-//        }
-//
-//        ListTag recordsNbt = nbt.getList("Records", Tag.TAG_COMPOUND);
-//        if (recordsNbt.isEmpty()) {
-//            return Collections.emptyList();
-//        }
-//
-//        List<ItemStack> list = new ArrayList<>(recordsNbt.size());
-//        for (int i = 0; i < Math.min(MAX_RECORDS, recordsNbt.size()); i++) {
-//            ItemStack record = ItemStack.of(recordsNbt.getCompound(i));
-//            if (!record.isEmpty()) {
-//                list.add(record);
-//            }
-//        }
-//
-//        return list;
-    }
-
-    public static void setCover(ItemStack stack, ItemStack record) {
-//        if (stack.getItem() != EtchedItems.ALBUM_COVER.get()) {
-//            return;
-//        }
-//
-//        if (record.isEmpty()) {
-//            stack.removeTagKey("CoverRecord");
-//            return;
-//        }
-//        stack.getOrCreateTag().put("CoverRecord", record.save(new CompoundTag()));
-    }
-
-    public static void setRecords(ItemStack stack, Collection<ItemStack> records) {
-//        if (stack.getItem() != EtchedItems.ALBUM_COVER.get() || records.isEmpty()) {
-//            return;
-//        }
-//
-//        CompoundTag nbt = stack.getOrCreateTag();
-//        ListTag recordsNbt = new ListTag();
-//        int i = 0;
-//        for (ItemStack record : records) {
-//            if (record.isEmpty()) {
-//                continue;
-//            }
-//            if (i >= MAX_RECORDS) {
-//                break;
-//            }
-//            recordsNbt.add(record.save(new CompoundTag()));
-//            i++;
-//        }
-//        nbt.put("Records", recordsNbt);
+        AlbumCoverComponent albumCover = stack.get(EtchedComponents.ALBUM_COVER);
+        return albumCover != null && albumCover.getCoverStack() != null;
     }
 }

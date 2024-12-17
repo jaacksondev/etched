@@ -4,24 +4,31 @@ import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.mojang.blaze3d.platform.NativeImage;
+import com.mojang.blaze3d.platform.TextureUtil;
 import gg.moonflower.etched.api.record.AlbumCover;
 import gg.moonflower.etched.client.render.item.AlbumCoverItemRenderer;
 import gg.moonflower.etched.client.render.item.AlbumImageProcessor;
 import gg.moonflower.etched.core.Etched;
 import net.minecraft.Util;
 import net.minecraft.client.Minecraft;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.client.event.ClientTickEvent;
-import net.neoforged.neoforge.common.NeoForge;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nullable;
+import org.lwjgl.system.MemoryStack;
+import org.lwjgl.system.MemoryUtil;
 
 import java.io.*;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.nio.ByteBuffer;
+import java.nio.IntBuffer;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -31,6 +38,13 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
 import java.util.concurrent.TimeUnit;
 
+import static org.lwjgl.stb.STBImage.stbi_failure_reason;
+import static org.lwjgl.stb.STBImage.stbi_load_from_memory;
+
+/**
+ * @author Ocelot
+ */
+@EventBusSubscriber(value = Dist.CLIENT, modid = Etched.MOD_ID)
 @ApiStatus.Internal
 public final class AlbumCoverCache {
 
@@ -54,20 +68,53 @@ public final class AlbumCoverCache {
                 LOGGER.error("Failed to load cache metadata", e);
             }
         }
-
-        NeoForge.EVENT_BUS.<ClientTickEvent>addListener(event -> {
-            if (nextWriteTime == Long.MAX_VALUE) {
-                return;
-            }
-
-            if (System.currentTimeMillis() - nextWriteTime > 0) {
-                nextWriteTime = Long.MAX_VALUE;
-                Util.backgroundExecutor().execute(AlbumCoverCache::writeMetadata);
-            }
-        });
     }
 
     private AlbumCoverCache() {
+    }
+
+    @SubscribeEvent
+    public static void onClientTickPost(ClientTickEvent.Post event) {
+        if (nextWriteTime == Long.MAX_VALUE) {
+            return;
+        }
+
+        if (System.currentTimeMillis() - nextWriteTime > 0) {
+            nextWriteTime = Long.MAX_VALUE;
+            Util.ioPool().execute(AlbumCoverCache::writeMetadata);
+        }
+    }
+
+    // Minecraft makes it so ONLY pngs can be loaded, so we have to manually load to support JPG and other formats
+    public static NativeImage read(InputStream stream) throws IOException {
+        ByteBuffer textureData = null;
+        try {
+            textureData = TextureUtil.readResource(stream);
+            textureData.rewind();
+            if (MemoryUtil.memAddress(textureData) == 0L) {
+                throw new IllegalArgumentException("Invalid buffer");
+            }
+
+            try (MemoryStack memorystack = MemoryStack.stackPush()) {
+                IntBuffer w = memorystack.mallocInt(1);
+                IntBuffer h = memorystack.mallocInt(1);
+                IntBuffer channels = memorystack.mallocInt(1);
+                ByteBuffer data = stbi_load_from_memory(textureData, w, h, channels, 4);
+                if (data == null) {
+                    throw new IOException("Could not load image: " + stbi_failure_reason());
+                }
+
+                return new NativeImage(
+                        NativeImage.Format.RGBA,
+                        w.get(0),
+                        h.get(0),
+                        true,
+                        MemoryUtil.memAddress(data)
+                );
+            }
+        } finally {
+            MemoryUtil.memFree(textureData);
+        }
     }
 
     public static CompletableFuture<AlbumCover> requestResource(String url) {
@@ -78,18 +125,18 @@ public final class AlbumCoverCache {
                 throw new CompletionException(e);
             }
         }, Util.nonCriticalIoPool()).thenApplyAsync(path -> {
-            try (FileInputStream is = new FileInputStream(path.toFile())) {
-                return AlbumCover.of(AlbumImageProcessor.apply(NativeImage.read(is), AlbumCoverItemRenderer.getOverlayImage()));
+            try (FileInputStream is = new FileInputStream(path.toFile()); NativeImage image = read(is)) {
+                return AlbumCover.of(AlbumImageProcessor.apply(image, AlbumCoverItemRenderer.getOverlayImage()));
             } catch (Exception e) {
                 throw new CompletionException(e);
             }
         }, Util.ioPool()).handle((result, throwable) -> {
             if (throwable != null) {
-                if (throwable instanceof CompletionException) {
+                while (throwable instanceof CompletionException) {
                     throwable = throwable.getCause();
                 }
 
-                LOGGER.error("Failed to load album cover from '" + url + "'", throwable);
+                LOGGER.error("Failed to load album cover from '{}'", url, throwable);
             }
 
             return result != null ? result : AlbumCover.EMPTY;
@@ -140,7 +187,7 @@ public final class AlbumCoverCache {
                     nextWriteTime = System.currentTimeMillis() + METADATA_WRITE_TIME;
                 }
             } catch (Exception e) {
-                LOGGER.error("Failed to create empty file '" + imageFile + "' for '" + url + "'", e);
+                LOGGER.error("Failed to create empty file '{}' for '{}'", imageFile, url, e);
             }
             return null;
         }

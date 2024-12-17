@@ -15,10 +15,9 @@ import net.minecraft.world.item.component.TooltipProvider;
 import java.util.Locale;
 import java.util.function.Consumer;
 
-public record MusicLabelComponent(String artist, String title, int primaryColor,
-                                  int secondaryColor) implements TooltipProvider {
+public record MusicLabelComponent(String artist, String title, int primaryColor, int secondaryColor) implements TooltipProvider {
 
-    public static final MusicLabelComponent EMPTY = new MusicLabelComponent("", "Custom Music", -1, -1);
+    public static final MusicLabelComponent DEFAULT = new MusicLabelComponent("", "Custom Music", -1, -1);
 
     private static final Codec<MusicLabelComponent> COMPLEX_CODEC = RecordCodecBuilder.create(instance -> instance.group(
             Codec.STRING.fieldOf("author").forGetter(MusicLabelComponent::artist),
@@ -54,6 +53,16 @@ public record MusicLabelComponent(String artist, String title, int primaryColor,
         this(author, title, color, color);
     }
 
+    @Override
+    public int primaryColor() {
+        return 0xFF000000 | this.primaryColor;
+    }
+
+    @Override
+    public int secondaryColor() {
+        return 0xFF000000 | this.secondaryColor;
+    }
+
     public boolean simple() {
         return this.primaryColor == this.secondaryColor;
     }
@@ -62,12 +71,16 @@ public record MusicLabelComponent(String artist, String title, int primaryColor,
         return this.primaryColor != 0xFFFFFF || this.secondaryColor != 0xFFFFFF;
     }
 
-    public MusicLabelComponent withAuthor(String author) {
+    public MusicLabelComponent withArtist(String author) {
         return new MusicLabelComponent(author, this.title, this.primaryColor, this.secondaryColor);
     }
 
     public MusicLabelComponent withTitle(String title) {
         return new MusicLabelComponent(this.artist, title, this.primaryColor, this.secondaryColor);
+    }
+
+    public MusicLabelComponent withInfo(String artist, String title) {
+        return new MusicLabelComponent(artist, title, this.primaryColor, this.secondaryColor);
     }
 
     public MusicLabelComponent withColor(int color) {

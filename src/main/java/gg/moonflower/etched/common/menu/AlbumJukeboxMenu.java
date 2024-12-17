@@ -1,6 +1,8 @@
 package gg.moonflower.etched.common.menu;
 
 import gg.moonflower.etched.api.record.PlayableRecord;
+import gg.moonflower.etched.common.blockentity.AlbumJukeboxBlockEntity;
+import gg.moonflower.etched.common.network.play.SetAlbumJukeboxTrackPacket;
 import gg.moonflower.etched.core.registry.EtchedMenus;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.Container;
@@ -11,60 +13,27 @@ import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.inventory.DataSlot;
 import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.entity.BlockEntity;
 
 /**
  * @author Ocelot
  */
 public class AlbumJukeboxMenu extends AbstractContainerMenu {
 
-    private final BlockPos.MutableBlockPos pos;
+    private final BlockPos pos;
     private final Container container;
-    private boolean initialized;
 
-    public AlbumJukeboxMenu(int i, Inventory inventory) {
-        this(i, inventory, new SimpleContainer(9), BlockPos.ZERO);
+    public AlbumJukeboxMenu(int containerId, Inventory inventory, BlockPos pos) {
+        this(containerId, inventory, new SimpleContainer(9), pos);
     }
 
-    public AlbumJukeboxMenu(int i, Inventory inventory, Container container, BlockPos pos) {
-        super(EtchedMenus.ALBUM_JUKEBOX_MENU.get(), i);
+    public AlbumJukeboxMenu(int containerId, Inventory inventory, Container container, BlockPos pos) {
+        super(EtchedMenus.ALBUM_JUKEBOX_MENU.get(), containerId);
         checkContainerSize(container, 9);
         this.container = container;
         container.startOpen(inventory.player);
-
-        this.pos = new BlockPos.MutableBlockPos().set(pos);
-        this.addDataSlot(new DataSlot() {
-            @Override
-            public int get() {
-                return AlbumJukeboxMenu.this.pos.getX();
-            }
-
-            @Override
-            public void set(int value) {
-                AlbumJukeboxMenu.this.pos.setX(value);
-            }
-        });
-        this.addDataSlot(new DataSlot() {
-            @Override
-            public int get() {
-                return AlbumJukeboxMenu.this.pos.getY();
-            }
-
-            @Override
-            public void set(int value) {
-                AlbumJukeboxMenu.this.pos.setY(value);
-            }
-        });
-        this.addDataSlot(new DataSlot() {
-            @Override
-            public int get() {
-                return AlbumJukeboxMenu.this.pos.getZ();
-            }
-
-            @Override
-            public void set(int value) {
-                AlbumJukeboxMenu.this.pos.setZ(value);
-            }
-        });
+        this.pos = pos;
 
         for (int n = 0; n < 3; ++n) {
             for (int m = 0; m < 3; ++m) {
@@ -88,13 +57,13 @@ public class AlbumJukeboxMenu extends AbstractContainerMenu {
         }
     }
 
-//    public boolean setPlayingTrack(Level level, SetAlbumJukeboxTrackPacket pkt) {
-//        BlockEntity blockEntity = level.getBlockEntity(this.pos);
-//        if (blockEntity instanceof AlbumJukeboxBlockEntity) {
-//            return ((AlbumJukeboxBlockEntity) blockEntity).setPlayingIndex(pkt.playingIndex(), pkt.track());
-//        }
-//        return false;
-//    }
+    public boolean setPlayingTrack(Level level, SetAlbumJukeboxTrackPacket pkt) {
+        BlockEntity blockEntity = level.getBlockEntity(this.pos);
+        if (blockEntity instanceof AlbumJukeboxBlockEntity jukebox) {
+            return jukebox.setPlayingIndex(pkt.playingIndex(), pkt.track());
+        }
+        return false;
+    }
 
     @Override
     public boolean stillValid(Player player) {
@@ -136,18 +105,6 @@ public class AlbumJukeboxMenu extends AbstractContainerMenu {
     public void removed(Player player) {
         super.removed(player);
         this.container.stopOpen(player);
-    }
-
-    @Override
-    public void setData(int index, int value) {
-        super.setData(index, value);
-        if (index >= 0 && index < 3) {
-            this.initialized = true;
-        }
-    }
-
-    public boolean isInitialized() {
-        return this.initialized;
     }
 
     public BlockPos getPos() {

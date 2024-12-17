@@ -11,7 +11,7 @@ import net.minecraft.world.item.ItemStack;
 /**
  * @author Ocelot
  */
-public class RadioMenu extends AbstractContainerMenu {
+public class RadioMenu extends AbstractContainerMenu implements UrlMenu {
 
     private final ContainerLevelAccess access;
     private String initialUrl;
@@ -36,11 +36,7 @@ public class RadioMenu extends AbstractContainerMenu {
         return stillValid(this.access, player, EtchedBlocks.RADIO.get());
     }
 
-    /**
-     * Sets the URL for the resulting stack to the specified value.
-     *
-     * @param url The new URL
-     */
+    @Override
     public void setUrl(String url) {
         this.access.execute((level, pos) -> {
             if (level.getBlockEntity(pos) instanceof RadioBlockEntity be) {

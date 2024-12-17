@@ -111,7 +111,12 @@ configurations {
 dependencies {
     implementation "net.neoforged:neoforge:${neo_version}"
 
-    implementation("javazoom:jlayer:1.0.1")
+    jarJar(implementation("javazoom:jlayer")) {
+        version {
+            strictly '[1.0.0,)'
+        }
+    }
+    additionalRuntimeClasspath("javazoom:jlayer:1.0.1")
 }
 
 // This block of code expands all declared replace properties in the specified resource targets.

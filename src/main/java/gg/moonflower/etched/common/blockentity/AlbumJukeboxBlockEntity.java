@@ -50,14 +50,10 @@ public class AlbumJukeboxBlockEntity extends RandomizableContainerBlockEntity im
         this.playingStack = ItemStack.EMPTY;
     }
 
-    public static void tick(Level level, BlockPos pos, BlockState state, AlbumJukeboxBlockEntity entity) {
-        if (level == null || !level.isClientSide()) {
-            return;
-        }
-
+    public static void tickClient(Level level, BlockPos pos, BlockState state, AlbumJukeboxBlockEntity entity) {
         if (!entity.loaded) {
             entity.loaded = true;
-            SoundTracker.playAlbum(entity, state, (ClientLevel) level, pos, false);
+            SoundTracker.playAlbum(entity, state, level, pos, false);
         }
 
         if (entity.isPlaying()) {
@@ -100,7 +96,7 @@ public class AlbumJukeboxBlockEntity extends RandomizableContainerBlockEntity im
             ContainerHelper.loadAllItems(tag, this.items, registries);
         }
         if (this.loaded) {
-            SoundTracker.playAlbum(this, this.getBlockState(), (ClientLevel) this.level, this.getBlockPos(), false);
+            SoundTracker.playAlbum(this, this.getBlockState(), this.level, this.getBlockPos(), false);
         }
     }
 
@@ -222,7 +218,7 @@ public class AlbumJukeboxBlockEntity extends RandomizableContainerBlockEntity im
         this.track = track;
 
         if (this.recalculatePlayingIndex(false)) {
-            int tracks = PlayableRecord.getStackTrackCount(this.playingStack);
+            int tracks = PlayableRecord.getTrackCount(this.level.registryAccess(), this.playingStack);
             if (this.track >= tracks) {
                 this.track = 0;
             }
@@ -253,7 +249,7 @@ public class AlbumJukeboxBlockEntity extends RandomizableContainerBlockEntity im
                 this.playingIndex = this.getContainerSize() - 1;
             }
             this.nextPlayingIndex(true);
-            this.track = Math.max(0, this.playingIndex < 0 || this.playingIndex >= this.getContainerSize() ? 0 : PlayableRecord.getStackTrackCount(this.getItem(this.playingIndex)) - 1);
+            this.track = Math.max(0, this.playingIndex < 0 || this.playingIndex >= this.getContainerSize() ? 0 : PlayableRecord.getTrackCount(this.level.registryAccess(), this.getItem(this.playingIndex)) - 1);
             this.playingStack = ItemStack.EMPTY;
         }
     }
@@ -262,7 +258,7 @@ public class AlbumJukeboxBlockEntity extends RandomizableContainerBlockEntity im
      * Cycles to the next index to begin playing.
      */
     public void next() {
-        int tracks = this.playingIndex < 0 || this.playingIndex >= this.getContainerSize() ? 1 : PlayableRecord.getStackTrackCount(this.getItem(this.playingIndex));
+        int tracks = this.playingIndex < 0 || this.playingIndex >= this.getContainerSize() ? 1 : PlayableRecord.getTrackCount(this.level.registryAccess(), this.getItem(this.playingIndex));
         if (this.track < tracks - 1) {
             this.track++;
         } else {
@@ -329,7 +325,17 @@ public class AlbumJukeboxBlockEntity extends RandomizableContainerBlockEntity im
         ItemStack oldStack = this.playingStack.copy();
         this.nextPlayingIndex(reverse);
         if (oldIndex != this.playingIndex || !ItemStack.matches(oldStack, this.playingStack)) {
-            this.track = reverse ? Math.max(0, this.playingIndex < 0 || this.playingIndex >= this.getContainerSize() ? 0 : PlayableRecord.getStackTrackCount(this.getItem(this.playingIndex)) - 1) : 0;
+            if (!reverse) {
+                this.track = 0;
+                return true;
+            }
+
+            if (this.playingIndex < 0 || this.playingIndex >= this.getContainerSize()) {
+                this.track = 0;
+                return true;
+            }
+
+            this.track = Math.max(0, PlayableRecord.getTrackCount(this.level.registryAccess(), this.getItem(this.playingIndex)) - 1);
             return true;
         }
         return false;

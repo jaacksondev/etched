@@ -7,10 +7,12 @@ public class EtchedConfig {
     public static class Client {
 
         public final ModConfigSpec.BooleanValue forceStereo;
+        public final ModConfigSpec.BooleanValue smoothParrotAnimation;
 
         public Client(ModConfigSpec.Builder builder) {
             builder.push("Game Feel");
             this.forceStereo = builder.comment("Always plays tracks in stereo even when in-world").define("Force Stereo", false);
+            this.smoothParrotAnimation = builder.comment("Makes the parrot dance animation smoother").define("Smooth Parrot Animation", true);
             builder.pop();
         }
     }

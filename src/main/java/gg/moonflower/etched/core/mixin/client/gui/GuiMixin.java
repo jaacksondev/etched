@@ -1,4 +1,4 @@
-package gg.moonflower.etched.core.mixin.client;
+package gg.moonflower.etched.core.mixin.client.gui;
 
 import gg.moonflower.etched.client.GuiHook;
 import net.minecraft.client.gui.Gui;
