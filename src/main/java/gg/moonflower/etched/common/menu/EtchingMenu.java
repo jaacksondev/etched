@@ -53,7 +53,7 @@ public class EtchingMenu extends AbstractContainerMenu implements UrlMenu {
 
     static {
         ImmutableSet.Builder<String> builder = new ImmutableSet.Builder<>();
-        builder.add("audio/wav", "audio/x-wav", "audio/opus", "application/ogg", "audio/ogg", "audio/mpeg", "application/octet-stream", "application/binary");
+        builder.add("audio/wav", "audio/x-wav", "audio/opus", "application/ogg", "audio/ogg", "audio/mpeg", "audio/mp3", "application/octet-stream", "application/binary");
         VALID_FORMATS = builder.build();
     }
 
